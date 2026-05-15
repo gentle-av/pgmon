@@ -1,0 +1,57 @@
+{
+  "server": {
+    "port": 3001
+  },
+  "databases": [
+    {
+      "name": "avr18",
+      "host": "localhost",
+      "port": 5432,
+      "database": "avr",
+      "username": "avr",
+      "password": "1",
+      "enabled": true,
+      "monitoringIntervalSeconds": 30
+    },
+    {
+      "name": "avr17",
+      "host": "localhost",
+      "port": 5433,
+      "database": "avr",
+      "username": "avr",
+      "password": "1",
+      "enabled": true,
+      "monitoringIntervalSeconds": 30
+    },
+    {
+      "name": "avr16",
+      "host": "localhost",
+      "port": 5434,
+      "database": "avr",
+      "username": "avr",
+      "password": "1",
+      "enabled": true,
+      "monitoringIntervalSeconds": 30
+    }
+  ],
+  "monitoring": {
+    "defaultIntervalSeconds": 30,
+    "collectQueries": true,
+    "collectConnections": true,
+    "collectLocks": true,
+    "collectCacheHitRatio": true,
+    "collectTableSizes": true,
+    "slowQueryThresholdMs": 1000,
+    "maxSlowQueries": 10
+  },
+  "alerting": {
+    "enabled": true,
+    "webhookUrl": "http://localhost:9090/alerts",
+    "connectionThresholds": {
+      "maxConnections": 100,
+      "minAvailableConnections": 5
+    },
+    "lockThresholdSeconds": 30,
+    "cacheHitRatioMinPercent": 95
+  }
+}
