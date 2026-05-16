@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>__TITLE__ - PostgreSQL Monitor</title>
+    <link rel="stylesheet" href="/css/framework/framework.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body data-refresh-interval="__REFRESH_INTERVAL__" data-theme="__THEME__">
+    <div class="container">
+      <div class="section">
+        <h1>📊 PostgreSQL Monitor</h1>
+        <button id="refresh-btn" class="btn btn-primary refresh-btn">
+          🔄 Refresh Data
+        </button>
+        <div id="databases-container" class="card-grid"></div>
+        <div id="timestamp" class="timestamp"></div>
+      </div>
+    </div>
+
+    <script src="/js/framework/core.js"></script>
+    <script src="/js/app.js"></script>
+  </body>
+</html>

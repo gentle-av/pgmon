@@ -1,0 +1,42 @@
+.database-card {
+  border-left: 4px solid var(--primary);
+}
+
+.metric {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.metric-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.metric-value {
+  font-family: monospace;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.refresh-btn {
+  margin-bottom: var(--spacing-lg);
+}
+
+.timestamp {
+  text-align: center;
+  margin-top: var(--spacing-xl);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+
+  .database-card {
+    padding: var(--spacing-md);
+  }
+}
