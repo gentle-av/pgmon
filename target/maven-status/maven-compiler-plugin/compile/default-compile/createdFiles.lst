@@ -2,6 +2,7 @@ avr/aspect/PerformanceAspect$MethodStats.class
 avr/strategy/Postgres18Strategy.class
 avr/model/IndexInfo.class
 avr/config/AppConfig.class
+avr/repository/AshHistoryRepository.class
 avr/service/DatabaseMonitorService.class
 avr/config/ServerConfig.class
 avr/model/ReplicationStatus.class
@@ -9,6 +10,7 @@ avr/strategy/PostgresStrategyFactory.class
 avr/PgGrafanaFasade.class
 avr/aspect/RetryAspect.class
 avr/repository/DatabaseStatsRepository.class
+avr/service/AshCollectorService.class
 avr/repository/IndexRepository.class
 avr/service/QueryAnalysisService.class
 avr/cache/CacheConfig.class
@@ -42,6 +44,7 @@ avr/config/ConnectionThresholds.class
 avr/config/AlertingSettings.class
 avr/controller/WebController.class
 avr/repository/LockRepository.class
+avr/controller/AshController.class
 avr/strategy/Postgres16Strategy.class
 avr/config/WebConfig.class
 avr/strategy/PostgresVersionDetector.class

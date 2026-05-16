@@ -1,0 +1,25 @@
+spring:
+  devtools:
+    livereload:
+      enabled: true
+      port: 35729
+    restart:
+      enabled: true
+      additional-paths:
+        - src/main/resources/static
+        - src/main/resources/templates
+      exclude:
+        - static/**
+  web:
+    resources:
+      static-locations:
+        - classpath:/static/
+      cache:
+        period: 0
+
+server:
+  port: 3001
+
+logging:
+  level:
+    org.springframework.web: DEBUG
