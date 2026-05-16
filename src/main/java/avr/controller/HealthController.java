@@ -3,7 +3,6 @@ package avr.controller;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,15 +10,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import avr.config.DatabaseConfig;
 import avr.config.MonitoringConfig;
+import avr.service.HealthCheckService;
 
 @RestController
 @RequestMapping("/api/health")
 public class HealthController {
 
   private final MonitoringConfig monitoringConfig;
+  private final HealthCheckService healthCheckService;
 
-  public HealthController(MonitoringConfig monitoringConfig) {
+  public HealthController(MonitoringConfig monitoringConfig,
+      HealthCheckService healthCheckService) {
     this.monitoringConfig = monitoringConfig;
+    this.healthCheckService = healthCheckService;
   }
 
   @GetMapping
@@ -30,7 +33,11 @@ public class HealthController {
 
     Map<String, Object> databases = new HashMap<>();
     for (DatabaseConfig dbConfig : monitoringConfig.getDatabases()) {
-      databases.put(dbConfig.name(), checkDatabase(dbConfig));
+      if (dbConfig.enabled()) {
+        databases.put(dbConfig.name(), healthCheckService.check(dbConfig));
+      } else {
+        databases.put(dbConfig.name(), Map.of("status", "DISABLED"));
+      }
     }
     result.put("databases", databases);
 
@@ -43,37 +50,10 @@ public class HealthController {
     if (dbConfig == null) {
       return Map.of("error", "Database not found: " + dbName);
     }
-    return checkDatabase(dbConfig);
-  }
-
-  private Map<String, Object> checkDatabase(DatabaseConfig dbConfig) {
-    Map<String, Object> status = new HashMap<>();
-    status.put("name", dbConfig.name());
-    status.put("enabled", dbConfig.enabled());
-
     if (!dbConfig.enabled()) {
-      status.put("status", "DISABLED");
-      return status;
+      return Map.of("status", "DISABLED", "name", dbName);
     }
-
-    try {
-      var builder = org.springframework.boot.jdbc.DataSourceBuilder.create();
-      builder.url(dbConfig.getJdbcUrl());
-      builder.username(dbConfig.username());
-      builder.password(dbConfig.password());
-      builder.driverClassName("org.postgresql.Driver");
-
-      JdbcTemplate jdbcTemplate = new JdbcTemplate(builder.build());
-      Integer result = jdbcTemplate.queryForObject("SELECT 1", Integer.class);
-
-      status.put("status", "UP");
-      status.put("response", result);
-    } catch (Exception e) {
-      status.put("status", "DOWN");
-      status.put("error", e.getMessage());
-    }
-
-    return status;
+    return healthCheckService.check(dbConfig);
   }
 
   private DatabaseConfig findDatabase(String name) {

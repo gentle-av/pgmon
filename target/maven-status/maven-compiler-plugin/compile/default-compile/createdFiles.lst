@@ -30,6 +30,7 @@ avr/config/MonitoringConfig.class
 avr/controller/HealthController.class
 avr/strategy/PostgresVersionDetector.class
 avr/service/VacuumMonitorService.class
+avr/dto/DatabaseConfigDTO.class
 avr/strategy/PostgresVersionStrategy.class
 avr/model/QueryStats.class
 avr/controller/MetricsController.class
