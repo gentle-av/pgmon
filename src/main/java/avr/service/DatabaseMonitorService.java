@@ -5,9 +5,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import avr.cache.CacheNames;
 import avr.config.DatabaseConfig;
 import avr.config.MonitoringConfig;
 import avr.model.DatabaseStats;
@@ -28,9 +31,16 @@ public class DatabaseMonitorService {
     this.databaseStatsRepository = databaseStatsRepository;
   }
 
+  @Cacheable(value = CacheNames.DATABASE_STATS, key = "#dbConfig.name()")
   public DatabaseStats collectStats(DatabaseConfig dbConfig) {
+    log.debug("Cache MISS - collecting fresh stats for: {}", dbConfig.name());
     JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
     return databaseStatsRepository.getDatabaseStats(jdbcTemplate, dbConfig.name());
+  }
+
+  @CacheEvict(value = CacheNames.DATABASE_STATS, key = "#dbConfig.name()")
+  public void evictStats(DatabaseConfig dbConfig) {
+    log.info("Evicted database stats for: {}", dbConfig.name());
   }
 
   private JdbcTemplate getJdbcTemplate(DatabaseConfig dbConfig) {

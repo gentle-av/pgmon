@@ -1,40 +1,37 @@
 package avr.aspect;
 
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Slf4j
 @Aspect
 @Component
 public class PerformanceAspect {
 
+    private static final Logger log = LoggerFactory.getLogger(PerformanceAspect.class);
     private final Map<String, MethodStats> stats = new ConcurrentHashMap<>();
 
     @Around("@annotation(avr.aspect.MonitorPerformance)")
     public Object monitorPerformance(ProceedingJoinPoint joinPoint) throws Throwable {
         String methodName = joinPoint.getSignature().toShortString();
         MethodStats methodStats = stats.computeIfAbsent(methodName, k -> new MethodStats());
-
         methodStats.incrementCalls();
         long start = System.currentTimeMillis();
-
         try {
             Object result = joinPoint.proceed();
             long duration = System.currentTimeMillis() - start;
             methodStats.addDuration(duration);
-
             if (duration > 2000) {
                 log.warn("Performance warning: {} took {}ms, avg: {}ms",
                     methodName, duration, methodStats.getAvgDuration());
             }
-
             return result;
         } catch (Exception e) {
             methodStats.incrementErrors();

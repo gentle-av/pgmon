@@ -4,9 +4,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import avr.cache.CacheNames;
 import avr.config.DatabaseConfig;
 import avr.model.LockInfo;
 import avr.repository.LockRepository;
@@ -21,6 +24,7 @@ public class LockMonitorService {
     this.lockRepository = lockRepository;
   }
 
+  @Cacheable(value = CacheNames.LOCK_INFO, key = "#dbConfig.name()")
   public List<LockInfo> getBlockingLocks(DatabaseConfig dbConfig) {
     JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
     return lockRepository.getBlockingLocks(jdbcTemplate);
@@ -29,6 +33,11 @@ public class LockMonitorService {
   public boolean hasBlockingLocks(DatabaseConfig dbConfig) {
     List<LockInfo> locks = getBlockingLocks(dbConfig);
     return !locks.isEmpty();
+  }
+
+  @CacheEvict(value = CacheNames.LOCK_INFO, key = "#dbConfig.name()")
+  public void evictLocks(DatabaseConfig dbConfig) {
+    // кэш будет очищен при вызове
   }
 
   private JdbcTemplate getJdbcTemplate(DatabaseConfig dbConfig) {

@@ -4,9 +4,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import avr.cache.CacheNames;
 import avr.config.DatabaseConfig;
 import avr.model.ConnectionInfo;
 import avr.repository.ActivityRepository;
@@ -21,16 +23,19 @@ public class ConnectionsMonitorService {
     this.activityRepository = activityRepository;
   }
 
+  @Cacheable(value = CacheNames.CONNECTION_INFO, key = "#dbConfig.name()")
   public List<ConnectionInfo> getActiveConnections(DatabaseConfig dbConfig) {
     JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
     return activityRepository.getActiveConnections(jdbcTemplate);
   }
 
+  @Cacheable(value = CacheNames.CONNECTION_INFO, key = "#dbConfig.name() + ':running'")
   public int getRunningQueriesCount(DatabaseConfig dbConfig) {
     JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
     return activityRepository.getRunningQueriesCount(jdbcTemplate);
   }
 
+  @Cacheable(value = CacheNames.CONNECTION_INFO, key = "#dbConfig.name() + ':waiting'")
   public int getWaitingQueriesCount(DatabaseConfig dbConfig) {
     JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
     return activityRepository.getWaitingQueriesCount(jdbcTemplate);

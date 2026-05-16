@@ -2,9 +2,11 @@ package avr.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import avr.cache.CacheNames;
 import avr.config.DatabaseConfig;
 import avr.config.MonitoringConfig;
 import avr.model.DatabaseStats;
@@ -41,47 +43,33 @@ public class MultiDatabaseMonitorService {
   @Scheduled(fixedDelay = 30000)
   public void monitorAllDatabases() {
     log.info("=== Запуск полного мониторинга всех БД ===");
-
     for (DatabaseConfig dbConfig : monitoringConfig.getDatabases()) {
       if (!dbConfig.enabled()) {
         log.debug("База {} отключена", dbConfig.name());
         continue;
       }
-
       log.info("--- Мониторинг БД: {} ---", dbConfig.name());
-
       try {
-        // 1. Общая статистика БД
         DatabaseStats stats = databaseMonitorService.collectStats(dbConfig);
         log.info("📊 [{}] Размер: {}, Активных коннектов: {}, Cache hit: {}%",
             dbConfig.name(), stats.sizeHuman(), stats.activeConnections(), stats.cacheHitRatio());
-
-        // 2. Активные соединения
         var connections = connectionsMonitorService.getActiveConnections(dbConfig);
         log.info("🔌 [{}] Активных сессий: {}, Ожидающих: {}",
             dbConfig.name(), connections.size(),
             connectionsMonitorService.getWaitingQueriesCount(dbConfig));
-
-        // 3. Блокировки
         var locks = lockMonitorService.getBlockingLocks(dbConfig);
         if (!locks.isEmpty()) {
           log.warn("🔒 [{}] Обнаружено {} блокировок!", dbConfig.name(), locks.size());
         }
-
-        // 4. Медленные запросы
         var slowQueries = queryAnalysisService.getSlowestQueries(dbConfig);
         if (!slowQueries.isEmpty()) {
           log.warn("🐌 [{}] Медленных запросов: {}", dbConfig.name(), slowQueries.size());
           slowQueries.forEach(q -> log.debug("  - {} ms: {}", q.meanTimeMs(), q.query()));
         }
-
-        // 5. Неиспользуемые индексы
         var unusedIndexes = indexAnalysisService.getUnusedIndexes(dbConfig);
         if (!unusedIndexes.isEmpty()) {
           log.warn("📇 [{}] Неиспользуемых индексов: {}", dbConfig.name(), unusedIndexes.size());
         }
-
-        // 6. Статистика VACUUM
         var vacuumStats = vacuumMonitorService.getVacuumStats(dbConfig);
         long highDeadTuples = vacuumStats.stream()
             .filter(v -> v.deadTupleRatio() > 10)
@@ -89,14 +77,30 @@ public class MultiDatabaseMonitorService {
         if (highDeadTuples > 0) {
           log.warn("🗑️ [{}] Таблиц с >10% dead tuples: {}", dbConfig.name(), highDeadTuples);
         }
-
         log.info("✅ Мониторинг БД {} завершён", dbConfig.name());
-
       } catch (Exception e) {
         log.error("❌ Ошибка мониторинга базы {}: {}", dbConfig.name(), e.getMessage());
       }
     }
-
     log.info("=== Мониторинг завершён ===");
+  }
+
+  @CacheEvict(value = {
+      CacheNames.DATABASE_STATS,
+      CacheNames.QUERY_STATS,
+      CacheNames.CONNECTION_INFO,
+      CacheNames.TABLE_METRICS,
+      CacheNames.INDEX_METRICS,
+      CacheNames.LOCK_INFO,
+      CacheNames.VACUUM_INFO
+  }, allEntries = true)
+  public void evictAllCaches() {
+    log.info("All monitoring caches evicted");
+  }
+
+  @CacheEvict(value = CacheNames.DATABASE_STATS, key = "#dbConfig.name()")
+  public void refreshDatabaseStats(DatabaseConfig dbConfig) {
+    log.info("Refreshing database stats for: {}", dbConfig.name());
+    databaseMonitorService.collectStats(dbConfig);
   }
 }

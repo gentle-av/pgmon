@@ -4,9 +4,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import avr.cache.CacheNames;
 import avr.config.DatabaseConfig;
 import avr.model.VacuumInfo;
 
@@ -15,6 +18,7 @@ public class VacuumMonitorService {
 
   private final Map<String, JdbcTemplate> jdbcTemplates = new ConcurrentHashMap<>();
 
+  @Cacheable(value = CacheNames.VACUUM_INFO, key = "#dbConfig.name()")
   public List<VacuumInfo> getVacuumStats(DatabaseConfig dbConfig) {
     JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
     String sql = """
@@ -44,6 +48,11 @@ public class VacuumMonitorService {
         rs.getString("last_analyze"),
         rs.getLong("vacuum_count"),
         rs.getLong("autovacuum_count")));
+  }
+
+  @CacheEvict(value = CacheNames.VACUUM_INFO, key = "#dbConfig.name()")
+  public void evictVacuumStats(DatabaseConfig dbConfig) {
+    // кэш будет очищен при вызове
   }
 
   private JdbcTemplate getJdbcTemplate(DatabaseConfig dbConfig) {
