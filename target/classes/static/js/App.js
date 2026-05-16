@@ -207,3 +207,9 @@ export class App {
       .replace(/'/g, "&#039;");
   }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const app = new App();
+  window.app = app;
+  app.init();
+});
