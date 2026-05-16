@@ -21,6 +21,7 @@ public class MonitoringConfig {
   private List<DatabaseConfig> databases;
   private MonitoringSettings monitoring;
   private AlertingSettings alerting;
+  private WebConfig web;
 
   @PostConstruct
   public void loadConfig() {
@@ -34,6 +35,7 @@ public class MonitoringConfig {
       this.databases = configRoot.databases();
       this.monitoring = configRoot.monitoring();
       this.alerting = configRoot.alerting();
+      this.web = configRoot.web();
 
       long enabledCount = databases.stream().filter(DatabaseConfig::enabled).count();
       log.info("Конфигурация загружена. Найдено {} баз данных для мониторинга", enabledCount);
@@ -57,5 +59,9 @@ public class MonitoringConfig {
 
   public AlertingSettings getAlerting() {
     return alerting;
+  }
+
+  public WebConfig getWeb() {
+    return web;
   }
 }

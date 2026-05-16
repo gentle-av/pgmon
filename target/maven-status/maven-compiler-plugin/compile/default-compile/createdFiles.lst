@@ -18,6 +18,7 @@ avr/model/ReplicationStatus.class
 avr/repository/TableStatsRepository.class
 avr/config/ConnectionThresholds.class
 avr/config/AlertingSettings.class
+avr/controller/WebController.class
 avr/strategy/PostgresStrategyFactory.class
 avr/PgGrafanaFasade.class
 avr/repository/DatabaseStatsRepository.class
@@ -27,7 +28,7 @@ avr/service/QueryAnalysisService.class
 avr/strategy/Postgres16Strategy.class
 avr/controller/TablesController.class
 avr/config/MonitoringConfig.class
-avr/controller/HealthController.class
+avr/config/WebConfig.class
 avr/strategy/PostgresVersionDetector.class
 avr/service/VacuumMonitorService.class
 avr/dto/DatabaseConfigDTO.class
