@@ -11,6 +11,12 @@ export class ApiClient {
     return response.json();
   }
 
+  async getMetricsForDatabase(dbName) {
+    const response = await fetch(`/api/metrics/all/${dbName}`);
+    if (!response.ok) throw new Error(`Failed to load metrics for ${dbName}`);
+    return response.json();
+  }
+
   async getMetricsForServer(host, port) {
     const databases = await this.getDatabases();
     const dbForServer = databases.find(
@@ -19,10 +25,7 @@ export class ApiClient {
     if (!dbForServer) {
       throw new Error(`No database found for ${host}:${port}`);
     }
-    const response = await fetch(`/api/metrics/all/${dbForServer.name}`);
-    if (!response.ok)
-      throw new Error(`Failed to load metrics for ${host}:${port}`);
-    return response.json();
+    return this.getMetricsForDatabase(dbForServer.name);
   }
 
   async getAlerts() {

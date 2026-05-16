@@ -74,14 +74,27 @@ export class App {
     const enabledServers = this.state.getEnabledServers();
     for (const server of enabledServers) {
       try {
-        const metrics = await this.api.getMetricsForServer(
-          server.host,
-          server.port,
-        );
-        this.state.updateServerMetrics(server, metrics);
+        const aggregatedMetrics = {
+          databases: {},
+          total_connections: 0,
+          total_size_bytes: 0,
+        };
+        for (const db of server.databases) {
+          try {
+            const metrics = await this.api.getMetricsForDatabase(db.name);
+            aggregatedMetrics.databases[db.name] = metrics;
+            const stats = metrics.database_stats || {};
+            aggregatedMetrics.total_connections += stats.activeConnections || 0;
+            aggregatedMetrics.total_size_bytes += stats.sizeBytes || 0;
+          } catch (e) {
+            console.error(`Failed to update metrics for ${db.name}`, e);
+            aggregatedMetrics.databases[db.name] = { error: e.message };
+          }
+        }
+        this.state.updateServerMetrics(server, aggregatedMetrics);
       } catch (e) {
         console.error(
-          `Failed to update metrics for ${server.host}:${server.port}`,
+          `Failed to update metrics for server ${server.host}:${server.port}`,
           e,
         );
       }
@@ -131,11 +144,24 @@ export class App {
       .find((s) => s.host === host && s.port === parseInt(port));
     if (server) {
       try {
-        const metrics = await this.api.getMetricsForServer(
-          host,
-          parseInt(port),
-        );
-        this.state.updateServerMetrics(server, metrics);
+        const aggregatedMetrics = {
+          databases: {},
+          total_connections: 0,
+          total_size_bytes: 0,
+        };
+        for (const db of server.databases) {
+          try {
+            const metrics = await this.api.getMetricsForDatabase(db.name);
+            aggregatedMetrics.databases[db.name] = metrics;
+            const stats = metrics.database_stats || {};
+            aggregatedMetrics.total_connections += stats.activeConnections || 0;
+            aggregatedMetrics.total_size_bytes += stats.sizeBytes || 0;
+          } catch (e) {
+            console.error(`Failed to update metrics for ${db.name}`, e);
+            aggregatedMetrics.databases[db.name] = { error: e.message };
+          }
+        }
+        this.state.updateServerMetrics(server, aggregatedMetrics);
         const serversMap = this._buildServersMap(
           this.state.getEnabledServers(),
         );
