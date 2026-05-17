@@ -9,6 +9,16 @@
       // "keyAlias": "tomcat"
     }
   },
+  "storage": {
+    "type": "postgresql",
+    "host": "localhost",
+    "port": 5432,
+    "database": "pgmon",
+    "username": "pgmon_user",
+    "password": "${PGMON_PASSWORD}",
+    "poolSize": 10,
+    "schema": "public"
+  },
   "web": {
     "enabled": true,
     "staticPath": "/web",

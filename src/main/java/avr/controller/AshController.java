@@ -1,6 +1,6 @@
 package avr.controller;
 
-import avr.config.DatabaseConfig;
+import avr.config.ConfigRoot;
 import avr.config.MonitoringConfig;
 import avr.repository.AshHistoryRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -11,21 +11,16 @@ import java.util.concurrent.ConcurrentHashMap;
 @RestController
 @RequestMapping("/api/ash")
 public class AshController {
-
     private final MonitoringConfig monitoringConfig;
     private final AshHistoryRepository ashRepository;
     private final Map<String, JdbcTemplate> jdbcTemplates = new ConcurrentHashMap<>();
-
-    public AshController(MonitoringConfig monitoringConfig,
-                         AshHistoryRepository ashRepository) {
+    public AshController(MonitoringConfig monitoringConfig, AshHistoryRepository ashRepository) {
         this.monitoringConfig = monitoringConfig;
         this.ashRepository = ashRepository;
     }
-
     @GetMapping("/data/{databaseName}")
-    public Map<String, Object> getAshData(@PathVariable String databaseName,
-                                           @RequestParam(defaultValue = "30") int minutes) {
-        DatabaseConfig dbConfig = findDatabase(databaseName);
+    public Map<String, Object> getAshData(@PathVariable String databaseName, @RequestParam(defaultValue = "30") int minutes) {
+        ConfigRoot.DatabaseConfig dbConfig = findDatabase(databaseName);
         if (dbConfig == null) {
             return Map.of("error", "Database not found");
         }
@@ -39,8 +34,7 @@ public class AshController {
             String category = (String) row.get("category");
             Number count = (Number) row.get("session_count");
             if (!times.contains(time)) times.add(time);
-            seriesMap.computeIfAbsent(category, k -> new ArrayList<>())
-                     .add(count);
+            seriesMap.computeIfAbsent(category, k -> new ArrayList<>()).add(count);
         }
         List<Map<String, Object>> series = new ArrayList<>();
         for (Map.Entry<String, List<Number>> entry : seriesMap.entrySet()) {
@@ -58,20 +52,18 @@ public class AshController {
         chartData.put("series", series);
         return chartData;
     }
-
-    private DatabaseConfig findDatabase(String name) {
-        return monitoringConfig.getDatabases().stream()
-            .filter(db -> db.name().equals(name) && db.enabled())
+    private ConfigRoot.DatabaseConfig findDatabase(String name) {
+        return monitoringConfig.getDatabaseConfigs().stream()
+            .filter(db -> db.getName().equals(name) && db.isEnabled())
             .findFirst()
             .orElse(null);
     }
-
-    private JdbcTemplate getJdbcTemplate(DatabaseConfig dbConfig) {
-        return jdbcTemplates.computeIfAbsent(dbConfig.name(), key -> {
+    private JdbcTemplate getJdbcTemplate(ConfigRoot.DatabaseConfig dbConfig) {
+        return jdbcTemplates.computeIfAbsent(dbConfig.getName(), key -> {
             var builder = org.springframework.boot.jdbc.DataSourceBuilder.create();
-            builder.url(dbConfig.getJdbcUrl());
-            builder.username(dbConfig.username());
-            builder.password(dbConfig.password());
+            builder.url(String.format("jdbc:postgresql://%s:%d/%s", dbConfig.getHost(), dbConfig.getPort(), dbConfig.getDatabase()));
+            builder.username(dbConfig.getUsername());
+            builder.password(dbConfig.getPassword());
             builder.driverClassName("org.postgresql.Driver");
             return new JdbcTemplate(builder.build());
         });
