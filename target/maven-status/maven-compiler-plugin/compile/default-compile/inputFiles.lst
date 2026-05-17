@@ -26,6 +26,7 @@
 /home/avr/code/projects/java/pgmon/src/main/java/avr/service/AshCollectorService.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/aspect/Retry.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/dto/DatabaseConfigDTO.java
+/home/avr/code/projects/java/pgmon/src/main/java/avr/service/DatabaseInitializationService.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/IndexInfo.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/config/ConfigRoot.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/ConfigController.java
@@ -49,7 +50,6 @@
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/AlertsController.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/TablesController.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/aspect/MonitorPerformance.java
-/home/avr/code/projects/java/pgmon/src/main/java/avr/controller/WebController.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/cache/TTLConfig.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/strategy/Postgres16Strategy.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/config/WebConfig.java

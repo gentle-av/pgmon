@@ -3,41 +3,66 @@ package avr.service;
 import avr.config.DatabaseConfig;
 import avr.config.MonitoringConfig;
 import avr.repository.AshHistoryRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import jakarta.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AshCollectorService {
 
+    private static final Logger log = LoggerFactory.getLogger(AshCollectorService.class);
+
     private final MonitoringConfig monitoringConfig;
     private final AshHistoryRepository ashRepository;
+    private final DatabaseInitializationService dbInitService;
     private final Map<String, JdbcTemplate> jdbcTemplates = new ConcurrentHashMap<>();
 
     public AshCollectorService(MonitoringConfig monitoringConfig,
-                                AshHistoryRepository ashRepository) {
+                                AshHistoryRepository ashRepository,
+                                DatabaseInitializationService dbInitService) {
         this.monitoringConfig = monitoringConfig;
         this.ashRepository = ashRepository;
+        this.dbInitService = dbInitService;
     }
 
-    @Scheduled(fixedDelay = 2000) // Сбор каждые 2 секунды
+    @PostConstruct
+    public void init() {
+        log.info("AshCollectorService инициализирован");
+        // Инициализация уже происходит в DatabaseInitializationService
+    }
+
+    @Scheduled(fixedDelay = 2000)
     public void collectAshSnapshots() {
         for (DatabaseConfig dbConfig : monitoringConfig.getDatabases()) {
             if (!dbConfig.enabled()) continue;
 
+            // Проверяем, инициализирована ли БД
+            if (!dbInitService.isInitialized(dbConfig.name())) {
+                log.debug("БД {} не инициализирована, пропускаем сбор", dbConfig.name());
+                continue;
+            }
+
             try {
                 JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
-                List<Map<String, Object>> sessions = collectActiveSessions(jdbcTemplate);
-                ashRepository.insertSnapshot(jdbcTemplate, dbConfig.name(), sessions);
+                List<Map<String, Object>> sessions = collectActiveSessions(jdbcTemplate, dbConfig);
+
+                if (!sessions.isEmpty()) {
+                    ashRepository.insertSnapshot(jdbcTemplate, dbConfig.name(), sessions);
+                    log.debug("Собрано {} сессий для БД {}", sessions.size(), dbConfig.name());
+                }
             } catch (Exception e) {
-                System.err.println("ASH collection failed for " + dbConfig.name() + ": " + e.getMessage());
+                log.error("ASH collection failed for {}: {}", dbConfig.name(), e.getMessage());
             }
         }
     }
 
-    private List<Map<String, Object>> collectActiveSessions(JdbcTemplate jdbcTemplate) {
+    private List<Map<String, Object>> collectActiveSessions(JdbcTemplate jdbcTemplate, DatabaseConfig dbConfig) {
         String sql = """
             SELECT
                 pid,
@@ -51,17 +76,34 @@ public class AshCollectorService {
             WHERE state = 'active'
               AND pid != pg_backend_pid()
               AND query NOT LIKE '%pg_stat_activity%'
+              AND query NOT LIKE '%pash_ash_history%'
         """;
 
-        return jdbcTemplate.queryForList(sql);
+        try {
+            return jdbcTemplate.queryForList(sql);
+        } catch (Exception e) {
+            log.error("Ошибка сбора сессий для {}: {}", dbConfig.name(), e.getMessage());
+            return List.of();
+        }
     }
 
     @Scheduled(cron = "0 0 * * * *")
     public void cleanOldData() {
         for (DatabaseConfig dbConfig : monitoringConfig.getDatabases()) {
-            if (!dbConfig.enabled()) continue;
-            JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
-            jdbcTemplate.execute("SELECT clean_old_ash_data()");
+            if (!dbConfig.enabled() || !dbInitService.isInitialized(dbConfig.name())) continue;
+
+            try {
+                JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
+                Integer deleted = jdbcTemplate.queryForObject(
+                    "SELECT clean_old_ash_data(7)",
+                    Integer.class
+                );
+                if (deleted != null && deleted > 0) {
+                    log.info("Очищено {} записей из ASH для БД {}", deleted, dbConfig.name());
+                }
+            } catch (Exception e) {
+                log.error("Ошибка очистки ASH для {}: {}", dbConfig.name(), e.getMessage());
+            }
         }
     }
 

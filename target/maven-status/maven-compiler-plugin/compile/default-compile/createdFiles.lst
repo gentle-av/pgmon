@@ -1,4 +1,5 @@
 avr/aspect/PerformanceAspect$MethodStats.class
+avr/service/DatabaseInitializationService.class
 avr/strategy/Postgres18Strategy.class
 avr/model/IndexInfo.class
 avr/config/AppConfig.class
@@ -42,7 +43,6 @@ avr/config/DatabaseConfig.class
 avr/repository/TableStatsRepository.class
 avr/config/ConnectionThresholds.class
 avr/config/AlertingSettings.class
-avr/controller/WebController.class
 avr/repository/LockRepository.class
 avr/controller/AshController.class
 avr/strategy/Postgres16Strategy.class
