@@ -1,3 +1,4 @@
+avr/config/SslConfig.class
 avr/aspect/PerformanceAspect$MethodStats.class
 avr/service/DatabaseInitializationService.class
 avr/strategy/Postgres18Strategy.class
@@ -5,6 +6,7 @@ avr/model/IndexInfo.class
 avr/config/AppConfig.class
 avr/repository/AshHistoryRepository.class
 avr/service/DatabaseMonitorService.class
+avr/config/DatabaseSslConfig.class
 avr/config/ServerConfig.class
 avr/model/ReplicationStatus.class
 avr/strategy/PostgresStrategyFactory.class
@@ -26,6 +28,7 @@ avr/controller/MetricsController.class
 avr/model/TableBloatInfo.class
 avr/config/ConfigRoot.class
 avr/model/VacuumInfo.class
+avr/config/SslConfiguration.class
 avr/service/IndexAnalysisService.class
 avr/repository/QueryStatsRepository.class
 avr/model/DatabaseStats.class

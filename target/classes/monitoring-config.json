@@ -1,6 +1,13 @@
 {
   "server": {
-    "port": 3001
+    "port": 3001,
+    "ssl": {
+      "enabled": true,
+      "keyStore": "classpath:keystore.p12",
+      "keyStorePassword": "changeit",
+      "keyStoreType": "PKCS12",
+      "keyAlias": "tomcat"
+    }
   },
   "web": {
     "enabled": true,
@@ -18,27 +25,14 @@
       "username": "avr",
       "password": "1",
       "enabled": true,
-      "monitoringIntervalSeconds": 30
-    },
-    {
-      "name": "avr17",
-      "host": "localhost",
-      "port": 5433,
-      "database": "avr",
-      "username": "avr",
-      "password": "1",
-      "enabled": true,
-      "monitoringIntervalSeconds": 30
-    },
-    {
-      "name": "avr16",
-      "host": "localhost",
-      "port": 5434,
-      "database": "avr",
-      "username": "avr",
-      "password": "1",
-      "enabled": true,
-      "monitoringIntervalSeconds": 30
+      "monitoringIntervalSeconds": 30,
+      "ssl": {
+        "enabled": false,
+        "mode": "require",
+        "sslCert": "classpath:client-cert.pem",
+        "sslKey": "classpath:client-key.pem",
+        "sslRootCert": "classpath:ca-cert.pem"
+      }
     }
   ],
   "monitoring": {

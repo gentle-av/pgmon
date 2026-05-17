@@ -15,6 +15,7 @@
 /home/avr/code/projects/java/pgmon/src/main/java/avr/service/MultiDatabaseMonitorService.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/DatabaseStatsRepository.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/service/IndexAnalysisService.java
+/home/avr/code/projects/java/pgmon/src/main/java/avr/config/SslConfiguration.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/TableSizeInfo.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/ReplicationStatus.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/config/MonitoringConfig.java
@@ -30,6 +31,7 @@
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/IndexInfo.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/config/ConfigRoot.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/ConfigController.java
+/home/avr/code/projects/java/pgmon/src/main/java/avr/config/SslConfig.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/service/QueryAnalysisService.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/LockInfo.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/MetricsController.java
@@ -51,6 +53,7 @@
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/TablesController.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/aspect/MonitorPerformance.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/cache/TTLConfig.java
+/home/avr/code/projects/java/pgmon/src/main/java/avr/config/DatabaseSslConfig.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/strategy/Postgres16Strategy.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/config/WebConfig.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/TableBloatInfo.java
