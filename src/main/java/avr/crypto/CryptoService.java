@@ -7,6 +7,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 
@@ -16,12 +17,11 @@ public class CryptoService {
     private static final int GCM_TAG_LENGTH = 128;
     private static final int GCM_IV_LENGTH = 12;
     private final SecretKey key;
-
-    public CryptoService(@Value("${encryption.master-key}") String masterKeyBase64) {
-        byte[] decodedKey = Base64.getDecoder().decode(masterKeyBase64);
-        this.key = new SecretKeySpec(decodedKey, "AES");
+    public CryptoService(@Value("${encryption.master-key}") String masterKey) throws Exception {
+        MessageDigest sha = MessageDigest.getInstance("SHA-256");
+        byte[] keyBytes = sha.digest(masterKey.getBytes(StandardCharsets.UTF_8));
+        this.key = new SecretKeySpec(keyBytes, "AES");
     }
-
     public String encrypt(String plainText) throws Exception {
         byte[] iv = new byte[GCM_IV_LENGTH];
         new SecureRandom().nextBytes(iv);
@@ -33,7 +33,6 @@ public class CryptoService {
         System.arraycopy(encrypted, 0, combined, iv.length, encrypted.length);
         return Base64.getEncoder().encodeToString(combined);
     }
-
     public String decrypt(String encryptedText) throws Exception {
         byte[] combined = Base64.getDecoder().decode(encryptedText);
         byte[] iv = new byte[GCM_IV_LENGTH];
