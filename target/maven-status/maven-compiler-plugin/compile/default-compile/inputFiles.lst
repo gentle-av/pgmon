@@ -32,6 +32,7 @@
 /home/avr/code/projects/java/pgmon/src/main/java/avr/config/ConfigRoot.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/ConfigController.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/config/SslConfig.java
+/home/avr/code/projects/java/pgmon/src/main/java/avr/config/Json5Parser.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/service/QueryAnalysisService.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/LockInfo.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/MetricsController.java

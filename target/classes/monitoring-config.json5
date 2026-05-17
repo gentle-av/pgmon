@@ -2,11 +2,11 @@
   "server": {
     "port": 3001,
     "ssl": {
-      "enabled": true,
-      "keyStore": "classpath:keystore.p12",
-      "keyStorePassword": "changeit",
-      "keyStoreType": "PKCS12",
-      "keyAlias": "tomcat"
+      "enabled": false
+      // "keyStore": "classpath:keystore.p12",
+      // "keyStorePassword": "changeit",
+      // "keyStoreType": "PKCS12",
+      // "keyAlias": "tomcat"
     }
   },
   "web": {

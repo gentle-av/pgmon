@@ -43,6 +43,7 @@ avr/config/MonitoringSettings.class
 avr/model/LockInfo.class
 avr/aspect/LoggingAspect.class
 avr/config/DatabaseConfig.class
+avr/config/Json5Parser.class
 avr/repository/TableStatsRepository.class
 avr/config/ConnectionThresholds.class
 avr/config/AlertingSettings.class
