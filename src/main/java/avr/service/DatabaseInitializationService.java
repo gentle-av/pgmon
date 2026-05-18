@@ -22,16 +22,19 @@ public class DatabaseInitializationService {
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitializationService.class);
     private final MonitoringConfig monitoringConfig;
     private final Map<String, Boolean> initialized = new ConcurrentHashMap<>();
-    private String schemaSql;
+    private String ashSchemaSql;
+
     public DatabaseInitializationService(MonitoringConfig monitoringConfig) {
         this.monitoringConfig = monitoringConfig;
     }
+
     @PostConstruct
     public void loadSql() throws Exception {
-        var resource = new ClassPathResource("db/migration/ash_schema.sql");
-        schemaSql = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
-        log.info("Загружен SQL скрипт из db/migration/ash_schema.sql");
+        var resource = new ClassPathResource("db/migration/05_ash_history_table.sql");
+        ashSchemaSql = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+        log.info("Загружен SQL скрипт для ASH");
     }
+
     @PostConstruct
     public void initAllDatabases() {
         for (ConfigRoot.DatabaseConfig db : monitoringConfig.getDatabaseConfigs()) {
@@ -40,17 +43,19 @@ public class DatabaseInitializationService {
             }
         }
     }
+
     private void initDatabase(ConfigRoot.DatabaseConfig db) {
-        log.info("Инициализация БД: {} (SSL: {})", db.getName(), db.getSsl() != null && db.getSsl().isEnabled());
+        log.info("Инициализация БД: {}", db.getName());
         try (Connection conn = createConnection(db);
              Statement stmt = conn.createStatement()) {
-            stmt.execute(schemaSql);
+            stmt.execute(ashSchemaSql);
             initialized.put(db.getName(), true);
-            log.info("✅ БД {} инициализирована", db.getName());
+            log.info("БД {} инициализирована", db.getName());
         } catch (Exception e) {
-            log.error("❌ Ошибка инициализации БД {}: {}", db.getName(), e.getMessage());
+            log.error("Ошибка инициализации БД {}: {}", db.getName(), e.getMessage());
         }
     }
+
     private Connection createConnection(ConfigRoot.DatabaseConfig db) throws SQLException {
         try {
             Class.forName("org.postgresql.Driver");
@@ -67,6 +72,7 @@ public class DatabaseInitializationService {
             throw new SQLException("PostgreSQL JDBC Driver not found", e);
         }
     }
+
     public boolean isInitialized(String dbName) {
         return initialized.getOrDefault(dbName, false);
     }

@@ -1,43 +1,39 @@
 package avr.service;
 
-import avr.config.ConfigRoot;
 import avr.model.LockInfo;
+import avr.model.MonitoredServer;
 import avr.repository.LockRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import javax.sql.DataSource;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class LockMonitorService {
     private final LockRepository lockRepository;
-    private final Map<String, JdbcTemplate> jdbcTemplates = new ConcurrentHashMap<>();
-    public LockMonitorService(LockRepository lockRepository) {
+    private final ConnectionPoolManager connectionPoolManager;
+
+    public LockMonitorService(LockRepository lockRepository,
+                               ConnectionPoolManager connectionPoolManager) {
         this.lockRepository = lockRepository;
+        this.connectionPoolManager = connectionPoolManager;
     }
-    @Cacheable(value = "lock_info", key = "#dbConfig.name")
-    public List<LockInfo> getBlockingLocks(ConfigRoot.DatabaseConfig dbConfig) {
-        JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
+
+    @Cacheable(value = "lock_info", key = "#server.id")
+    public List<LockInfo> getBlockingLocks(MonitoredServer server) {
+        DataSource dataSource = connectionPoolManager.getDataSource(server.getId());
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return lockRepository.getBlockingLocks(jdbcTemplate);
     }
-    public boolean hasBlockingLocks(ConfigRoot.DatabaseConfig dbConfig) {
-        List<LockInfo> locks = getBlockingLocks(dbConfig);
+
+    public boolean hasBlockingLocks(MonitoredServer server) {
+        List<LockInfo> locks = getBlockingLocks(server);
         return !locks.isEmpty();
     }
-    @CacheEvict(value = "lock_info", key = "#dbConfig.name")
-    public void evictLocks(ConfigRoot.DatabaseConfig dbConfig) {
-    }
-    private JdbcTemplate getJdbcTemplate(ConfigRoot.DatabaseConfig dbConfig) {
-        return jdbcTemplates.computeIfAbsent(dbConfig.getName(), key -> {
-            var builder = org.springframework.boot.jdbc.DataSourceBuilder.create();
-            builder.url(String.format("jdbc:postgresql://%s:%d/%s", dbConfig.getHost(), dbConfig.getPort(), dbConfig.getDatabase()));
-            builder.username(dbConfig.getUsername());
-            builder.password(dbConfig.getPassword());
-            builder.driverClassName("org.postgresql.Driver");
-            return new JdbcTemplate(builder.build());
-        });
+
+    @CacheEvict(value = "lock_info", key = "#server.id")
+    public void evictLocks(MonitoredServer server) {
     }
 }

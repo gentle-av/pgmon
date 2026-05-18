@@ -1,57 +1,73 @@
 package avr.service;
 
-import avr.config.ConfigRoot;
-import avr.config.MonitoringConfig;
+import avr.model.MonitoredServer;
+import avr.model.PollingConfiguration;
 import avr.repository.AshHistoryRepository;
+import avr.repository.MonitoredServerRepository;
+import avr.repository.PollingConfigurationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
+import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class AshCollectorService {
     private static final Logger log = LoggerFactory.getLogger(AshCollectorService.class);
-    private final MonitoringConfig monitoringConfig;
     private final AshHistoryRepository ashRepository;
     private final DatabaseInitializationService dbInitService;
-    private final Map<String, JdbcTemplate> jdbcTemplates = new ConcurrentHashMap<>();
-    public AshCollectorService(MonitoringConfig monitoringConfig,
-                                AshHistoryRepository ashRepository,
-                                DatabaseInitializationService dbInitService) {
-        this.monitoringConfig = monitoringConfig;
+    private final ConnectionPoolManager connectionPoolManager;
+    private final MonitoredServerRepository serverRepository;
+    private final PollingConfigurationRepository pollingConfigRepository;
+
+    public AshCollectorService(AshHistoryRepository ashRepository,
+                                DatabaseInitializationService dbInitService,
+                                ConnectionPoolManager connectionPoolManager,
+                                MonitoredServerRepository serverRepository,
+                                PollingConfigurationRepository pollingConfigRepository) {
         this.ashRepository = ashRepository;
         this.dbInitService = dbInitService;
+        this.connectionPoolManager = connectionPoolManager;
+        this.serverRepository = serverRepository;
+        this.pollingConfigRepository = pollingConfigRepository;
     }
+
     @PostConstruct
     public void init() {
         log.info("AshCollectorService инициализирован");
     }
+
     @Scheduled(fixedDelay = 2000)
     public void collectAshSnapshots() {
-        for (ConfigRoot.DatabaseConfig dbConfig : monitoringConfig.getDatabaseConfigs()) {
-            if (!dbConfig.isEnabled()) continue;
-            if (!dbInitService.isInitialized(dbConfig.getName())) {
-                log.debug("БД {} не инициализирована, пропускаем сбор", dbConfig.getName());
+        List<MonitoredServer> servers = serverRepository.findByEnabledTrue();
+        for (MonitoredServer server : servers) {
+            if (!dbInitService.isInitialized(server.getServerName())) {
+                log.debug("БД {} не инициализирована, пропускаем сбор", server.getServerName());
+                continue;
+            }
+            PollingConfiguration pollingConfig = pollingConfigRepository.findByServerId(server.getId()).orElse(null);
+            if (pollingConfig == null || !pollingConfig.isCollectAshData()) {
                 continue;
             }
             try {
-                JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
-                List<Map<String, Object>> sessions = collectActiveSessions(jdbcTemplate, dbConfig);
+                DataSource dataSource = connectionPoolManager.getDataSource(server.getId());
+                JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+                List<Map<String, Object>> sessions = collectActiveSessions(jdbcTemplate, server);
                 if (!sessions.isEmpty()) {
-                    ashRepository.insertSnapshot(jdbcTemplate, dbConfig.getName(), sessions);
-                    log.debug("Собрано {} сессий для БД {}", sessions.size(), dbConfig.getName());
+                    ashRepository.insertSnapshot(jdbcTemplate, server.getServerName(), sessions);
+                    log.debug("Собрано {} сессий для БД {}", sessions.size(), server.getServerName());
                 }
             } catch (Exception e) {
-                log.error("ASH collection failed for {}: {}", dbConfig.getName(), e.getMessage());
+                log.error("ASH collection failed for {}: {}", server.getServerName(), e.getMessage());
             }
         }
     }
-    private List<Map<String, Object>> collectActiveSessions(JdbcTemplate jdbcTemplate, ConfigRoot.DatabaseConfig dbConfig) {
+
+    private List<Map<String, Object>> collectActiveSessions(JdbcTemplate jdbcTemplate, MonitoredServer server) {
         String sql = """
             SELECT
                 pid,
@@ -70,36 +86,29 @@ public class AshCollectorService {
         try {
             return jdbcTemplate.queryForList(sql);
         } catch (Exception e) {
-            log.error("Ошибка сбора сессий для {}: {}", dbConfig.getName(), e.getMessage());
+            log.error("Ошибка сбора сессий для {}: {}", server.getServerName(), e.getMessage());
             return List.of();
         }
     }
+
     @Scheduled(cron = "0 0 * * * *")
     public void cleanOldData() {
-        for (ConfigRoot.DatabaseConfig dbConfig : monitoringConfig.getDatabaseConfigs()) {
-            if (!dbConfig.isEnabled() || !dbInitService.isInitialized(dbConfig.getName())) continue;
+        List<MonitoredServer> servers = serverRepository.findByEnabledTrue();
+        for (MonitoredServer server : servers) {
+            if (!dbInitService.isInitialized(server.getServerName())) continue;
             try {
-                JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
+                DataSource dataSource = connectionPoolManager.getDataSource(server.getId());
+                JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
                 Integer deleted = jdbcTemplate.queryForObject(
                     "SELECT clean_old_ash_data(7)",
                     Integer.class
                 );
                 if (deleted != null && deleted > 0) {
-                    log.info("Очищено {} записей из ASH для БД {}", deleted, dbConfig.getName());
+                    log.info("Очищено {} записей из ASH для БД {}", deleted, server.getServerName());
                 }
             } catch (Exception e) {
-                log.error("Ошибка очистки ASH для {}: {}", dbConfig.getName(), e.getMessage());
+                log.error("Ошибка очистки ASH для {}: {}", server.getServerName(), e.getMessage());
             }
         }
-    }
-    private JdbcTemplate getJdbcTemplate(ConfigRoot.DatabaseConfig dbConfig) {
-        return jdbcTemplates.computeIfAbsent(dbConfig.getName(), key -> {
-            var builder = org.springframework.boot.jdbc.DataSourceBuilder.create();
-            builder.url(String.format("jdbc:postgresql://%s:%d/%s", dbConfig.getHost(), dbConfig.getPort(), dbConfig.getDatabase()));
-            builder.username(dbConfig.getUsername());
-            builder.password(dbConfig.getPassword());
-            builder.driverClassName("org.postgresql.Driver");
-            return new JdbcTemplate(builder.build());
-        });
     }
 }

@@ -1,31 +1,39 @@
 package avr.controller;
 
-import avr.config.ConfigRoot;
-import avr.config.MonitoringConfig;
+import avr.model.MonitoredServer;
 import avr.repository.AshHistoryRepository;
+import avr.repository.MonitoredServerRepository;
+import avr.service.ConnectionPoolManager;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
+import javax.sql.DataSource;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/ash")
 public class AshController {
-    private final MonitoringConfig monitoringConfig;
+    private final MonitoredServerRepository serverRepository;
     private final AshHistoryRepository ashRepository;
+    private final ConnectionPoolManager connectionPoolManager;
     private final Map<String, JdbcTemplate> jdbcTemplates = new ConcurrentHashMap<>();
-    public AshController(MonitoringConfig monitoringConfig, AshHistoryRepository ashRepository) {
-        this.monitoringConfig = monitoringConfig;
+
+    public AshController(MonitoredServerRepository serverRepository,
+                         AshHistoryRepository ashRepository,
+                         ConnectionPoolManager connectionPoolManager) {
+        this.serverRepository = serverRepository;
         this.ashRepository = ashRepository;
+        this.connectionPoolManager = connectionPoolManager;
     }
-    @GetMapping("/data/{databaseName}")
-    public Map<String, Object> getAshData(@PathVariable String databaseName, @RequestParam(defaultValue = "30") int minutes) {
-        ConfigRoot.DatabaseConfig dbConfig = findDatabase(databaseName);
-        if (dbConfig == null) {
-            return Map.of("error", "Database not found");
+
+    @GetMapping("/data/{serverId}")
+    public Map<String, Object> getAshData(@PathVariable String serverId, @RequestParam(defaultValue = "30") int minutes) {
+        MonitoredServer server = serverRepository.findById(serverId).orElse(null);
+        if (server == null) {
+            return Map.of("error", "Server not found");
         }
-        JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
-        List<Map<String, Object>> rawData = ashRepository.getAshData(jdbcTemplate, databaseName, minutes);
+        JdbcTemplate jdbcTemplate = getJdbcTemplate(server);
+        List<Map<String, Object>> rawData = ashRepository.getAshData(jdbcTemplate, server.getServerName(), minutes);
         Map<String, Object> chartData = new HashMap<>();
         List<String> times = new ArrayList<>();
         Map<String, List<Number>> seriesMap = new LinkedHashMap<>();
@@ -52,20 +60,11 @@ public class AshController {
         chartData.put("series", series);
         return chartData;
     }
-    private ConfigRoot.DatabaseConfig findDatabase(String name) {
-        return monitoringConfig.getDatabaseConfigs().stream()
-            .filter(db -> db.getName().equals(name) && db.isEnabled())
-            .findFirst()
-            .orElse(null);
-    }
-    private JdbcTemplate getJdbcTemplate(ConfigRoot.DatabaseConfig dbConfig) {
-        return jdbcTemplates.computeIfAbsent(dbConfig.getName(), key -> {
-            var builder = org.springframework.boot.jdbc.DataSourceBuilder.create();
-            builder.url(String.format("jdbc:postgresql://%s:%d/%s", dbConfig.getHost(), dbConfig.getPort(), dbConfig.getDatabase()));
-            builder.username(dbConfig.getUsername());
-            builder.password(dbConfig.getPassword());
-            builder.driverClassName("org.postgresql.Driver");
-            return new JdbcTemplate(builder.build());
+
+    private JdbcTemplate getJdbcTemplate(MonitoredServer server) {
+        return jdbcTemplates.computeIfAbsent(server.getId(), key -> {
+            DataSource dataSource = connectionPoolManager.getDataSource(server.getId());
+            return new JdbcTemplate(dataSource);
         });
     }
 }

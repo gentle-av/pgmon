@@ -1,21 +1,26 @@
 package avr.service;
 
-import avr.config.ConfigRoot;
+import avr.model.MonitoredServer;
 import avr.model.VacuumInfo;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import javax.sql.DataSource;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class VacuumMonitorService {
-    private final Map<String, JdbcTemplate> jdbcTemplates = new ConcurrentHashMap<>();
-    @Cacheable(value = "vacuum_info", key = "#dbConfig.name")
-    public List<VacuumInfo> getVacuumStats(ConfigRoot.DatabaseConfig dbConfig) {
-        JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
+    private final ConnectionPoolManager connectionPoolManager;
+
+    public VacuumMonitorService(ConnectionPoolManager connectionPoolManager) {
+        this.connectionPoolManager = connectionPoolManager;
+    }
+
+    @Cacheable(value = "vacuum_info", key = "#server.id")
+    public List<VacuumInfo> getVacuumStats(MonitoredServer server) {
+        DataSource dataSource = connectionPoolManager.getDataSource(server.getId());
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         String sql = """
             SELECT schemaname, relname as table_name,
                    n_dead_tup as dead_tuples,
@@ -43,17 +48,8 @@ public class VacuumMonitorService {
             rs.getLong("vacuum_count"),
             rs.getLong("autovacuum_count")));
     }
-    @CacheEvict(value = "vacuum_info", key = "#dbConfig.name")
-    public void evictVacuumStats(ConfigRoot.DatabaseConfig dbConfig) {
-    }
-    private JdbcTemplate getJdbcTemplate(ConfigRoot.DatabaseConfig dbConfig) {
-        return jdbcTemplates.computeIfAbsent(dbConfig.getName(), key -> {
-            var builder = org.springframework.boot.jdbc.DataSourceBuilder.create();
-            builder.url(String.format("jdbc:postgresql://%s:%d/%s", dbConfig.getHost(), dbConfig.getPort(), dbConfig.getDatabase()));
-            builder.username(dbConfig.getUsername());
-            builder.password(dbConfig.getPassword());
-            builder.driverClassName("org.postgresql.Driver");
-            return new JdbcTemplate(builder.build());
-        });
+
+    @CacheEvict(value = "vacuum_info", key = "#server.id")
+    public void evictVacuumStats(MonitoredServer server) {
     }
 }

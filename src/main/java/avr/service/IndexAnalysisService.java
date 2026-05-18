@@ -1,33 +1,27 @@
 package avr.service;
 
-import avr.config.ConfigRoot;
 import avr.model.IndexInfo;
+import avr.model.MonitoredServer;
 import avr.repository.IndexRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import javax.sql.DataSource;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class IndexAnalysisService {
     private final IndexRepository indexRepository;
-    private final Map<String, JdbcTemplate> jdbcTemplates = new ConcurrentHashMap<>();
-    public IndexAnalysisService(IndexRepository indexRepository) {
+    private final ConnectionPoolManager connectionPoolManager;
+
+    public IndexAnalysisService(IndexRepository indexRepository,
+                                 ConnectionPoolManager connectionPoolManager) {
         this.indexRepository = indexRepository;
+        this.connectionPoolManager = connectionPoolManager;
     }
-    public List<IndexInfo> getUnusedIndexes(ConfigRoot.DatabaseConfig dbConfig) {
-        JdbcTemplate jdbcTemplate = getJdbcTemplate(dbConfig);
+
+    public List<IndexInfo> getUnusedIndexes(MonitoredServer server) {
+        DataSource dataSource = connectionPoolManager.getDataSource(server.getId());
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         return indexRepository.getUnusedIndexes(jdbcTemplate);
-    }
-    private JdbcTemplate getJdbcTemplate(ConfigRoot.DatabaseConfig dbConfig) {
-        return jdbcTemplates.computeIfAbsent(dbConfig.getName(), key -> {
-            var builder = org.springframework.boot.jdbc.DataSourceBuilder.create();
-            builder.url(String.format("jdbc:postgresql://%s:%d/%s", dbConfig.getHost(), dbConfig.getPort(), dbConfig.getDatabase()));
-            builder.username(dbConfig.getUsername());
-            builder.password(dbConfig.getPassword());
-            builder.driverClassName("org.postgresql.Driver");
-            return new JdbcTemplate(builder.build());
-        });
     }
 }
