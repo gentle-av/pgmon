@@ -5,6 +5,7 @@ import avr.model.StoredCredential;
 import avr.repository.CredentialRepository;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.List;
@@ -16,6 +17,7 @@ public class CredentialService {
     private final CredentialRepository credentialRepository;
     private final CryptoService cryptoService;
     private final Cache<String, String> passwordCache;
+
     public CredentialService(CredentialRepository credentialRepository, CryptoService cryptoService) {
         this.credentialRepository = credentialRepository;
         this.cryptoService = cryptoService;
@@ -24,15 +26,19 @@ public class CredentialService {
                 .maximumSize(100)
                 .build();
     }
+
     public List<StoredCredential> getAllEnabledCredentials() {
         return credentialRepository.findByEnabledTrue();
     }
+
     public Optional<StoredCredential> getCredential(String id) {
         return credentialRepository.findById(id);
     }
+
     public Optional<StoredCredential> getCredentialByName(String name) {
         return credentialRepository.findByName(name);
     }
+
     public String getDecryptedPassword(String credentialId) throws Exception {
         String cached = passwordCache.getIfPresent(credentialId);
         if (cached != null) {
@@ -44,6 +50,7 @@ public class CredentialService {
         passwordCache.put(credentialId, decrypted);
         return decrypted;
     }
+
     public StoredCredential saveCredential(StoredCredential credential) throws Exception {
         if (credential.getId() == null) {
             credential.setId(UUID.randomUUID().toString());
@@ -59,11 +66,24 @@ public class CredentialService {
         }
         return credentialRepository.save(credential);
     }
+
     public void deleteCredential(String id) {
         passwordCache.invalidate(id);
         credentialRepository.deleteById(id);
     }
+
     public void refreshCache(String credentialId) {
         passwordCache.invalidate(credentialId);
+    }
+
+    public StoredCredential saveCredentialWithoutEncryption(StoredCredential credential) {
+        if (credential.getId() == null) {
+            credential.setId(UUID.randomUUID().toString());
+        }
+        if (credential.getCreatedAt() == null) {
+            credential.setCreatedAt(LocalDateTime.now());
+        }
+        credential.setUpdatedAt(LocalDateTime.now());
+        return credentialRepository.save(credential);
     }
 }

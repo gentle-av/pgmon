@@ -1,0 +1,83 @@
+package avr.dto;
+
+public class RegisterServerRequest {
+    private String credentialName;
+    private String serverName;
+    private String displayName;
+    private String host;
+    private int port;
+    private String databaseName;
+    private String username;
+    private String password;
+    private String sslMode = "disable";
+    private String environment = "production";
+    private String description;
+    private int connectionTimeoutMs = 5000;
+    private boolean enabled = true;
+    private boolean failIfExists = false;
+    private int priority = 5;
+    private int pollingIntervalSeconds = 30;
+    private boolean collectQueries = true;
+    private boolean collectConnections = true;
+    private boolean collectLocks = true;
+    private boolean collectCacheHitRatio = true;
+    private boolean collectUnusedIndexes = false;
+    private boolean collectVacuumStats = true;
+    private boolean collectAshData = true;
+    private Integer slowQueryThresholdMs;
+    private Integer maxSlowQueries;
+    private Double deadTupleRatioThresholdPercent;
+
+    public String getCredentialName() { return credentialName; }
+    public void setCredentialName(String credentialName) { this.credentialName = credentialName; }
+    public String getServerName() { return serverName; }
+    public void setServerName(String serverName) { this.serverName = serverName; }
+    public String getDisplayName() { return displayName; }
+    public void setDisplayName(String displayName) { this.displayName = displayName; }
+    public String getHost() { return host; }
+    public void setHost(String host) { this.host = host; }
+    public int getPort() { return port; }
+    public void setPort(int port) { this.port = port; }
+    public String getDatabaseName() { return databaseName; }
+    public void setDatabaseName(String databaseName) { this.databaseName = databaseName; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+    public String getSslMode() { return sslMode; }
+    public void setSslMode(String sslMode) { this.sslMode = sslMode; }
+    public String getEnvironment() { return environment; }
+    public void setEnvironment(String environment) { this.environment = environment; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public int getConnectionTimeoutMs() { return connectionTimeoutMs; }
+    public void setConnectionTimeoutMs(int connectionTimeoutMs) { this.connectionTimeoutMs = connectionTimeoutMs; }
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public boolean isFailIfExists() { return failIfExists; }
+    public void setFailIfExists(boolean failIfExists) { this.failIfExists = failIfExists; }
+    public int getPriority() { return priority; }
+    public void setPriority(int priority) { this.priority = priority; }
+    public int getPollingIntervalSeconds() { return pollingIntervalSeconds; }
+    public void setPollingIntervalSeconds(int pollingIntervalSeconds) { this.pollingIntervalSeconds = pollingIntervalSeconds; }
+    public boolean isCollectQueries() { return collectQueries; }
+    public void setCollectQueries(boolean collectQueries) { this.collectQueries = collectQueries; }
+    public boolean isCollectConnections() { return collectConnections; }
+    public void setCollectConnections(boolean collectConnections) { this.collectConnections = collectConnections; }
+    public boolean isCollectLocks() { return collectLocks; }
+    public void setCollectLocks(boolean collectLocks) { this.collectLocks = collectLocks; }
+    public boolean isCollectCacheHitRatio() { return collectCacheHitRatio; }
+    public void setCollectCacheHitRatio(boolean collectCacheHitRatio) { this.collectCacheHitRatio = collectCacheHitRatio; }
+    public boolean isCollectUnusedIndexes() { return collectUnusedIndexes; }
+    public void setCollectUnusedIndexes(boolean collectUnusedIndexes) { this.collectUnusedIndexes = collectUnusedIndexes; }
+    public boolean isCollectVacuumStats() { return collectVacuumStats; }
+    public void setCollectVacuumStats(boolean collectVacuumStats) { this.collectVacuumStats = collectVacuumStats; }
+    public boolean isCollectAshData() { return collectAshData; }
+    public void setCollectAshData(boolean collectAshData) { this.collectAshData = collectAshData; }
+    public Integer getSlowQueryThresholdMs() { return slowQueryThresholdMs; }
+    public void setSlowQueryThresholdMs(Integer slowQueryThresholdMs) { this.slowQueryThresholdMs = slowQueryThresholdMs; }
+    public Integer getMaxSlowQueries() { return maxSlowQueries; }
+    public void setMaxSlowQueries(Integer maxSlowQueries) { this.maxSlowQueries = maxSlowQueries; }
+    public Double getDeadTupleRatioThresholdPercent() { return deadTupleRatioThresholdPercent; }
+    public void setDeadTupleRatioThresholdPercent(Double deadTupleRatioThresholdPercent) { this.deadTupleRatioThresholdPercent = deadTupleRatioThresholdPercent; }
+}

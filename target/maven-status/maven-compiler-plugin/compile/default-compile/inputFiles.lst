@@ -26,10 +26,12 @@
 /home/avr/code/projects/java/pgmon/src/main/java/avr/config/MonitoringConfig.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/config/StorageDataSourceConfig.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/ActivityRepository.java
+/home/avr/code/projects/java/pgmon/src/main/java/avr/controller/ServerManagementController.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/DatabaseStats.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/QueryStatsRepository.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/strategy/PostgresStrategyFactory.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/AshHistoryRepository.java
+/home/avr/code/projects/java/pgmon/src/main/java/avr/service/ServerManagementService.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/service/AshCollectorService.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/CredentialRepository.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/aspect/Retry.java
@@ -55,6 +57,7 @@
 /home/avr/code/projects/java/pgmon/src/main/java/avr/config/MonitoringSettings.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/ConnectionInfo.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/cache/CacheConfig.java
+/home/avr/code/projects/java/pgmon/src/main/java/avr/dto/UpdatePollingRequest.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/TableStatsRepository.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/service/DatabaseMonitorService.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/MonitoredServerRepository.java
@@ -64,7 +67,9 @@
 /home/avr/code/projects/java/pgmon/src/main/java/avr/config/ServerConfig.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/PollingHistoryRepository.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/aspect/PerformanceAspect.java
+/home/avr/code/projects/java/pgmon/src/main/java/avr/dto/UpdateServerRequest.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/AlertsController.java
+/home/avr/code/projects/java/pgmon/src/main/java/avr/dto/RegisterServerRequest.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/TablesController.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/aspect/MonitorPerformance.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/cache/TTLConfig.java
