@@ -84,6 +84,7 @@ avr/repository/TableStatsRepository.class
 avr/model/StoredCredential.class
 avr/service/CredentialService.class
 avr/strategy/Postgres16Strategy.class
+avr/dto/ActiveSessionsRequest.class
 avr/config/ConfigRoot$WebConfig.class
 avr/strategy/PostgresVersionDetector.class
 avr/cache/StatsCacheWrapper.class
