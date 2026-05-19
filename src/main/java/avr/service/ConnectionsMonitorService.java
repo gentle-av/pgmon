@@ -68,25 +68,6 @@ public class ConnectionsMonitorService {
     return jdbcTemplate.queryForList(sql, from, to);
   }
 
-  public List<Map<String, Object>> getActiveSessionsHistory(MonitoredServer server, LocalDateTime from,
-      LocalDateTime to) {
-    DataSource dataSource = connectionPoolManager.getDataSource(server.getId());
-    JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-    String sql = """
-            SELECT
-                DATE_TRUNC('minute', snapshot_time) as time_bucket,
-                COUNT(*) as active_sessions_count,
-                COUNT(DISTINCT pid) as unique_pids
-            FROM pash_ash_history
-            WHERE server_id = ?
-              AND snapshot_time BETWEEN ? AND ?
-              AND is_active = true
-            GROUP BY DATE_TRUNC('minute', snapshot_time)
-            ORDER BY time_bucket ASC
-        """;
-    return jdbcTemplate.queryForList(sql, server.getId(), from, to);
-  }
-
   public List<Map<String, Object>> getActiveSessionsDetails(MonitoredServer server) {
     DataSource dataSource = connectionPoolManager.getDataSource(server.getId());
     JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
@@ -109,5 +90,45 @@ public class ConnectionsMonitorService {
             LIMIT 100
         """;
     return jdbcTemplate.queryForList(sql);
+  }
+
+  public List<Map<String, Object>> getActiveSessionsByWaitEvent(MonitoredServer server, LocalDateTime from,
+      LocalDateTime to) {
+    DataSource dataSource = connectionPoolManager.getDataSource(server.getId());
+    JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+    String sql = """
+            SELECT
+                COALESCE(wait_event_type, 'CPU') as wait_event_type,
+                COALESCE(wait_event, 'CPU') as wait_event,
+                COUNT(*) as count,
+                array_agg(pid) as pids
+            FROM pg_stat_activity
+            WHERE state = 'active'
+              AND pid != pg_backend_pid()
+              AND query_start BETWEEN ? AND ?
+            GROUP BY wait_event_type, wait_event
+            ORDER BY count DESC
+        """;
+    return jdbcTemplate.queryForList(sql, from, to);
+  }
+
+  public List<Map<String, Object>> getActiveSessionsHistory(MonitoredServer server, LocalDateTime from,
+      LocalDateTime to) {
+    DataSource dataSource = connectionPoolManager.getDataSource(server.getId());
+    JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+    String sql = """
+            SELECT
+                DATE_TRUNC('minute', snapshot_time) as time_bucket,
+                wait_event_type,
+                wait_event,
+                COUNT(*) as session_count,
+                COUNT(DISTINCT pid) as unique_pids
+            FROM active_sessions_history
+            WHERE server_id = ?
+              AND snapshot_time BETWEEN ? AND ?
+            GROUP BY DATE_TRUNC('minute', snapshot_time), wait_event_type, wait_event
+            ORDER BY time_bucket ASC
+        """;
+    return jdbcTemplate.queryForList(sql, server.getId(), from, to);
   }
 }

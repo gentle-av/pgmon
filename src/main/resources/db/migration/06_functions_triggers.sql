@@ -1,4 +1,3 @@
--- Функция обновления updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN

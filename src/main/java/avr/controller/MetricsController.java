@@ -202,4 +202,23 @@ public class MetricsController {
     }
     return result;
   }
+
+  @PostMapping("/active-sessions/by-wait-event")
+  public Map<String, Object> getActiveSessionsByWaitEvent(@RequestBody ActiveSessionsRequest request) {
+    MonitoredServer server = serverRepository.findById(request.getServerId()).orElse(null);
+    if (server == null) {
+      return Map.of("error", "Server not found: " + request.getServerId());
+    }
+    LocalDateTime fromTime = request.getFrom() != null ? request.getFrom() : LocalDateTime.now().minusMinutes(5);
+    LocalDateTime toTime = request.getTo() != null ? request.getTo() : LocalDateTime.now();
+    List<Map<String, Object>> stats = connectionsMonitorService.getActiveSessionsByWaitEvent(server, fromTime, toTime);
+    Map<String, Object> response = new HashMap<>();
+    response.put("from", fromTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+    response.put("to", toTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+    response.put("server_id", server.getId());
+    response.put("server_name", server.getServerName());
+    response.put("total_active_sessions", stats.stream().mapToInt(s -> ((Number) s.get("count")).intValue()).sum());
+    response.put("by_wait_event", stats);
+    return response;
+  }
 }
