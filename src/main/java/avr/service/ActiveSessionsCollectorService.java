@@ -27,7 +27,7 @@ public class ActiveSessionsCollectorService {
     this.connectionPoolManager = connectionPoolManager;
   }
 
-  @Scheduled(fixedDelay = 10000) // Каждые 10 секунд
+  @Scheduled(fixedDelay = 1000)
   public void collectActiveSessions() {
     List<MonitoredServer> servers = serverRepository.findByEnabledTrue();
     for (MonitoredServer server : servers) {
