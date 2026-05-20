@@ -11,6 +11,7 @@
 /home/avr/code/projects/java/pgmon/src/main/java/avr/config/ConnectionThresholds.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/MonitoredServer.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/service/PollingHistoryService.java
+/home/avr/code/projects/java/pgmon/src/main/java/avr/controller/HelpController.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/service/ConnectionPoolManager.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/PgGrafanaFasade.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/AshController.java

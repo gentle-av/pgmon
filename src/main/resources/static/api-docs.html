@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PostgreSQL Monitor API Документация</title>
+  </head>
+  <body>
+    <h1>PostgreSQL Monitor API Документация</h1>
+    <p><strong>Базовый URL:</strong> http://localhost:3001/api</p>
+    <p><strong>Формат данных:</strong> JSON</p>
+    <p><strong>Кодировка:</strong> UTF-8</p>
+
+    <h2>1. Управление серверами (/api/servers)</h2>
+
+    <h3>1.1 Регистрация нового сервера</h3>
+    <p><strong>POST</strong> /api/servers/register</p>
+    <p>
+      <strong>Описание:</strong> Добавляет новый сервер в систему мониторинга.
+      Автоматически создает учетные данные и конфигурацию опроса.
+    </p>
+    <pre>
+{
+  "credentialName": "avr18-cred",           // string - уникальное имя учетных данных
+  "serverName": "avr18",                     // string - уникальное имя сервера
+  "displayName": "AVR18 Database",           // string - отображаемое имя (опционально)
+  "host": "localhost",                       // string - хост PostgreSQL
+  "port": 5432,                              // integer - порт PostgreSQL (по умолчанию 5432)
+  "databaseName": "avr",                     // string - имя базы данных
+  "username": "avr",                         // string - имя пользователя БД
+  "password": "1",                           // string - пароль (будет зашифрован)
+  "sslMode": "disable",                      // string - режим SSL: disable, require, verify-ca, verify-full
+  "environment": "production",               // string - окружение: production, staging, development, test
+  "description": "Main database",            // string - описание сервера (опционально)
+  "connectionTimeoutMs": 5000,               // integer - таймаут подключения в миллисекундах (по умолч. 5000)
+  "enabled": true,                           // boolean - включен ли мониторинг
+  "priority": 5,                             // integer - приоритет опроса (1-10, чем меньше тем выше)
+  "pollingIntervalSeconds": 30,              // integer - интервал основного мониторинга в секундах
+  "collectQueries": true,                    // boolean - собирать медленные запросы
+  "collectConnections": true,                // boolean - собирать информацию о подключениях
+  "collectLocks": true,                      // boolean - собирать информацию о блокировках
+  "collectCacheHitRatio": true,              // boolean - собирать кэш-хит-рацио
+  "collectUnusedIndexes": false,             // boolean - собирать неиспользуемые индексы
+  "collectVacuumStats": true,                // boolean - собирать статистику VACUUM
+  "collectAshData": true,                    // boolean - собирать ASH (Active Session History)
+  "slowQueryThresholdMs": 1000,              // integer - порог медленного запроса в мс
+  "maxSlowQueries": 10,                      // integer - максимальное количество медленных запросов
+  "deadTupleRatioThresholdPercent": 10.0     // float - порог мертвых кортежей в процентах
+}
+    </pre>
+
+    <h3>1.2 Получить все серверы</h3>
+    <p><strong>GET</strong> /api/servers</p>
+    <p><strong>Описание:</strong> Возвращает список всех серверов в системе.</p>
+
+    <h3>1.3 Получить включенные серверы</h3>
+    <p><strong>GET</strong> /api/servers/enabled</p>
+    <p><strong>Описание:</strong> Возвращает только серверы с enabled=true.</p>
+
+    <h3>1.4 Получить сервер по ID</h3>
+    <p><strong>GET</strong> /api/servers/{id}</p>
+    <p><strong>Параметры пути:</strong> id - UUID сервера</p>
+
+    <h3>1.5 Получить сервер по имени</h3>
+    <p><strong>GET</strong> /api/servers/by-name/{name}</p>
+    <p><strong>Параметры пути:</strong> name - server_name сервера</p>
+
+    <h3>1.6 Обновить сервер</h3>
+    <p><strong>PUT</strong> /api/servers/{id}</p>
+    <pre>
+{
+  "displayName": "New Name",                 // string - новое отображаемое имя
+  "environment": "staging",                  // string - новое окружение
+  "description": "Updated description",      // string - новое описание
+  "connectionTimeoutMs": 10000,              // integer - новый таймаут подключения
+  "enabled": true,                           // boolean - статус включения
+  "status": "online"                         // string - статус: unknown, online, offline, error
+}
+    </pre>
+
+    <h3>1.7 Удалить сервер</h3>
+    <p><strong>DELETE</strong> /api/servers/{id}</p>
+    <p>
+      <strong>Описание:</strong> Удаляет сервер и связанную конфигурацию опроса.
+    </p>
+
+    <h3>1.8 Включить сервер</h3>
+    <p><strong>POST</strong> /api/servers/{id}/enable</p>
+
+    <h3>1.9 Отключить сервер</h3>
+    <p><strong>POST</strong> /api/servers/{id}/disable</p>
+
+    <h3>1.10 Получить конфигурацию опроса</h3>
+    <p><strong>GET</strong> /api/servers/{id}/polling</p>
+
+    <h3>1.11 Обновить конфигурацию опроса (секунды)</h3>
+    <p><strong>PUT</strong> /api/servers/{id}/polling</p>
+    <pre>
+{
+  "pollingIntervalSeconds": 30,              // integer - интервал опроса в секундах (мин 5)
+  "slowQueryThresholdMs": 1000,              // integer - порог медленного запроса в мс
+  "maxSlowQueries": 10,                      // integer - макс. кол-во медленных запросов
+  "priority": 5,                             // integer - приоритет (1-10)
+  "collectQueries": true,                    // boolean - собирать запросы
+  "collectConnections": true,                // boolean - собирать подключения
+  "collectLocks": true,                      // boolean - собирать блокировки
+  "collectCacheHitRatio": true,              // boolean - собирать кэш-хит
+  "collectUnusedIndexes": false,             // boolean - собирать неиспользуемые индексы
+  "collectVacuumStats": true,                // boolean - собирать vacuum статистику
+  "collectAshData": true                     // boolean - собирать ASH данные
+}
+    </pre>
+
+    <h3>1.12 Обновить конфигурацию опроса (миллисекунды)</h3>
+    <p><strong>PUT</strong> /api/servers/{id}/polling/ms</p>
+    <pre>
+{
+  "pollingIntervalMs": 5000,                 // integer - интервал опроса в миллисекундах (мин 100)
+  "ashCollectionIntervalMs": 2000,           // integer - интервал сбора ASH в миллисекундах
+  "sessionsCollectionIntervalMs": 1000,      // integer - интервал сбора сессий в миллисекундах
+  "slowQueryThresholdMs": 1000,              // integer - порог медленного запроса в мс
+  "maxSlowQueries": 10,                      // integer - макс. кол-во медленных запросов
+  "priority": 5,                             // integer - приоритет (1-10)
+  "collectQueries": true,                    // boolean - собирать запросы
+  "collectConnections": true,                // boolean - собирать подключения
+  "collectLocks": true,                      // boolean - собирать блокировки
+  "collectCacheHitRatio": true,              // boolean - собирать кэш-хит
+  "collectUnusedIndexes": false,             // boolean - собирать неиспользуемые индексы
+  "collectVacuumStats": true,                // boolean - собирать vacuum статистику
+  "collectAshData": true                     // boolean - собирать ASH данные
+}
+    </pre>
+
+    <h3>1.13 Обновить пул соединений</h3>
+    <p><strong>POST</strong> /api/servers/{id}/refresh-pool</p>
+    <p>
+      <strong>Описание:</strong> Пересоздает пул соединений к серверу (применяет
+      новые настройки).
+    </p>
+
+    <h2>2. Управление учетными данными (/api/credentials)</h2>
+
+    <h3>2.1 Получить все учетные данные</h3>
+    <p><strong>GET</strong> /api/credentials</p>
+
+    <h3>2.2 Получить учетные данные по ID</h3>
+    <p><strong>GET</strong> /api/credentials/{id}</p>
+
+    <h3>2.3 Создать учетные данные</h3>
+    <p><strong>POST</strong> /api/credentials</p>
+    <pre>
+{
+  "name": "avr18-cred",                     // string - уникальное имя учетных данных
+  "host": "localhost",                       // string - хост PostgreSQL
+  "port": 5432,                              // integer - порт (по умолч. 5432)
+  "databaseName": "avr",                     // string - имя базы данных
+  "username": "avr",                         // string - имя пользователя
+  "encryptedPassword": "1",                  // string - пароль (будет зашифрован)
+  "sslMode": "disable",                      // string - disable, require, verify-ca, verify-full
+  "enabled": true                            // boolean - активно ли
+}
+    </pre>
+
+    <h3>2.4 Обновить учетные данные</h3>
+    <p><strong>PUT</strong> /api/credentials/{id}</p>
+
+    <h3>2.5 Удалить учетные данные</h3>
+    <p><strong>DELETE</strong> /api/credentials/{id}</p>
+
+    <h3>2.6 Проверить подключение</h3>
+    <p><strong>POST</strong> /api/credentials/{id}/test</p>
+    <p>
+      <strong>Описание:</strong> Проверяет возможность подключения к БД с
+      указанными учетными данными.
+    </p>
+
+    <h3>2.7 Обновить кэш пароля</h3>
+    <p><strong>POST</strong> /api/credentials/{id}/refresh</p>
+    <p>
+      <strong>Описание:</strong> Очищает кэшированный пароль, заставляя
+      перечитать его из БД.
+    </p>
+
+    <h2>3. Метрики и мониторинг (/api/metrics)</h2>
+
+    <h3>3.1 Получить все метрики сервера</h3>
+    <p><strong>GET</strong> /api/metrics/all/{serverId}</p>
+    <p>
+      <strong>Описание:</strong> Возвращает полный набор метрик: статистика БД,
+      блокировки, индексы, vacuum, подключения.
+    </p>
+
+    <h3>3.2 Получить активные подключения</h3>
+    <p><strong>GET</strong> /api/metrics/connections/{serverId}</p>
+    <p>
+      <strong>Описание:</strong> Возвращает список активных подключений с
+      информацией о PID, пользователе, приложении, состоянии, запросе.
+    </p>
+
+    <h3>3.3 Получить медленные запросы</h3>
+    <p><strong>GET</strong> /api/metrics/slow-queries/{serverId}</p>
+    <p>
+      <strong>Описание:</strong> Возвращает список медленных запросов на основе
+      pg_stat_statements.
+    </p>
+
+    <h3>3.4 Получить блокировки</h3>
+    <p><strong>GET</strong> /api/metrics/locks/{serverId}</p>
+    <p>
+      <strong>Описание:</strong> Возвращает информацию о блокирующих и
+      заблокированных запросах.
+    </p>
+
+    <h3>3.5 Получить неиспользуемые индексы</h3>
+    <p><strong>GET</strong> /api/metrics/unused-indexes/{serverId}</p>
+    <p>
+      <strong>Описание:</strong> Возвращает индексы с низким количеством
+      сканирований (idx_scan &lt; 100).
+    </p>
+
+    <h3>3.6 Получить статистику VACUUM</h3>
+    <p><strong>GET</strong> /api/metrics/vacuum/{serverId}</p>
+    <p>
+      <strong>Описание:</strong> Возвращает статистику по мертвым кортежам и
+      операциям VACUUM для каждой таблицы.
+    </p>
+
+    <h3>3.7 Получить активные сессии за период</h3>
+    <p><strong>POST</strong> /api/metrics/active-sessions</p>
+    <pre>
+{
+  "serverId": "uuid",                        // string - UUID сервера
+  "from": "2026-05-19T22:00:00",             // string - начало периода (ISO формат)
+  "to": "2026-05-19T23:00:00"                // string - конец периода (ISO формат)
+}
+    </pre>
+    <p>
+      <strong>Описание:</strong> Возвращает активные сессии из pg_stat_activity
+      за указанный период.
+    </p>
+
+    <h3>3.8 Получить все активные сессии (кратко)</h3>
+    <p><strong>GET</strong> /api/metrics/active-sessions/all</p>
+    <p>
+      <strong>Описание:</strong> Возвращает краткую статистику по всем серверам:
+      количество активных и ожидающих запросов.
+    </p>
+
+    <h3>3.9 Получить сессии по событиям ожидания</h3>
+    <p><strong>POST</strong> /api/metrics/active-sessions/by-wait-event</p>
+    <pre>
+{
+  "serverId": "uuid",                        // string - UUID сервера
+  "from": "2026-05-19T22:00:00",             // string - начало периода (ISO формат)
+  "to": "2026-05-19T23:00:00"                // string - конец периода (ISO формат)
+}
+    </pre>
+    <p>
+      <strong>Описание:</strong> Группирует активные сессии по типу события
+      ожидания (CPU, Lock, IO, LWLock и т.д.).
+    </p>
+
+    <h2>4. ASH данные (/api/ash)</h2>
+
+    <h3>4.1 Получить ASH данные для графика</h3>
+    <p><strong>GET</strong> /api/ash/data/{serverId}?minutes=30</p>
+    <p>
+      <strong>Параметры запроса:</strong> minutes - количество минут истории (по
+      умолчанию 30, максимум 1440)
+    </p>
+    <p>
+      <strong>Описание:</strong> Возвращает данные для построения графика
+      активных сессий, сгруппированные по минутам и типам ожидания.
+    </p>
+
+    <h2>5. Алerts (/api/alerts)</h2>
+
+    <h3>5.1 Получить активные алerts</h3>
+    <p><strong>GET</strong> /api/alerts</p>
+    <p>
+      <strong>Описание:</strong> Возвращает список активных предупреждений:
+      блокировки (HIGH), медленные запросы (MEDIUM), ожидающие запросы >10
+      (HIGH).
+    </p>
+
+    <h2>6. Конфигурация (/api/config)</h2>
+
+    <h3>6.1 Получить список БД из конфига</h3>
+    <p><strong>GET</strong> /api/config/databases</p>
+    <p>
+      <strong>Описание:</strong> Возвращает список баз данных из файла
+      monitoring-config.json5.
+    </p>
+
+    <h3>6.2 Получить все серверы (через конфиг)</h3>
+    <p><strong>GET</strong> /api/config/servers</p>
+    <p><strong>Описание:</strong> Возвращает список серверов из БД.</p>
+
+    <h3>6.3 Получить порт сервера</h3>
+    <p><strong>GET</strong> /api/config/server</p>
+    <p>
+      <strong>Описание:</strong> Возвращает порт, на котором запущен мониторинг.
+    </p>
+    <pre>{"port": 3001}</pre>
+
+    <h3>6.4 Получить настройки мониторинга</h3>
+    <p><strong>GET</strong> /api/config/monitoring</p>
+    <p>
+      <strong>Описание:</strong> Возвращает глобальные настройки мониторинга
+      (пороги, интервалы по умолчанию).
+    </p>
+
+    <h2>7. Таблицы (/api/tables)</h2>
+
+    <h3>7.1 Получить самые большие таблицы</h3>
+    <p><strong>GET</strong> /api/tables/largest/{serverId}?limit=20</p>
+    <p>
+      <strong>Параметры запроса:</strong> limit - количество таблиц (по
+      умолчанию 20, максимум 100)
+    </p>
+    <p>
+      <strong>Описание:</strong> Возвращает список самых больших таблиц в БД с
+      размерами таблиц и индексов.
+    </p>
+
+    <hr />
+    <h2>Структуры данных</h2>
+
+    <h3>MonitoredServer</h3>
+    <pre>
+{
+  "id": "uuid",                              // UUID сервера
+  "credentialId": "uuid",                    // UUID учетных данных
+  "serverName": "avr18",                     // имя сервера
+  "displayName": "AVR18 Database",           // отображаемое имя
+  "environment": "production",               // окружение
+  "description": "Main database",            // описание
+  "connectionTimeoutMs": 5000,               // таймаут подключения (мс)
+  "enabled": true,                           // включен ли мониторинг
+  "status": "online",                        // статус: unknown, online, offline, error
+  "lastChecked": "2026-05-19T22:00:00",      // время последней проверки
+  "lastError": null,                         // последняя ошибка
+  "createdAt": "2026-05-18T19:49:18",        // дата создания
+  "updatedAt": "2026-05-18T19:49:18"         // дата обновления
+}
+    </pre>
+
+    <h3>PollingConfiguration</h3>
+    <pre>
+{
+  "id": "uuid",                              // UUID конфигурации
+  "serverId": "uuid",                        // UUID сервера
+  "active": true,                            // активна ли конфигурация
+  "priority": 5,                             // приоритет (1-10)
+  "pollingIntervalMs": 5000,                 // интервал опроса (мс)
+  "ashCollectionIntervalMs": 2000,           // интервал ASH (мс)
+  "sessionsCollectionIntervalMs": 1000,      // интервал сессий (мс)
+  "collectQueries": true,                    // собирать запросы
+  "collectConnections": true,                // собирать подключения
+  "collectLocks": true,                      // собирать блокировки
+  "collectCacheHitRatio": true,              // собирать кэш-хит
+  "collectUnusedIndexes": false,             // собирать неиспользуемые индексы
+  "collectVacuumStats": true,                // собирать vacuum
+  "collectAshData": true,                    // собирать ASH
+  "slowQueryThresholdMs": 1000,              // порог медленного запроса (мс)
+  "maxSlowQueries": 10,                      // макс. медленных запросов
+  "deadTupleRatioThresholdPercent": 10.0     // порог мертвых кортежей (%)
+}
+    </pre>
+
+    <h3>Стандартные коды ответов</h3>
+    <ul>
+      <li><strong>200 OK</strong> - запрос выполнен успешно</li>
+      <li><strong>201 Created</strong> - ресурс создан</li>
+      <li><strong>204 No Content</strong> - ресурс удален</li>
+      <li><strong>400 Bad Request</strong> - неверный запрос</li>
+      <li><strong>404 Not Found</strong> - ресурс не найден</li>
+      <li>
+        <strong>500 Internal Server Error</strong> - внутренняя ошибка сервера
+      </li>
+    </ul>
+  </body>
+</html>
