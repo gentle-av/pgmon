@@ -1,95 +1,149 @@
 package avr.model;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "monitored_servers")
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity @Table(name = "monitored_servers")
 public class MonitoredServer {
-    @Id
-    private String id;
+  @Id
+  private String id;
 
-    @Column(name = "credential_id")
-    private String credentialId;
+  @Column(name = "credential_id")
+  private String credentialId;
 
-    @Column(name = "server_name")
-    private String serverName;
+  @Column(name = "server_name")
+  private String serverName;
 
-    @Column(name = "display_name")
-    private String displayName;
+  @Column(name = "display_name")
+  private String displayName;
 
-    private String environment;
+  private String environment;
+  private String description;
 
-    private String description;
+  @Column(name = "connection_timeout_ms")
+  private int connectionTimeoutMs = 5000;
 
-    @Column(name = "connection_timeout_ms")
-    private int connectionTimeoutMs = 5000;
+  private boolean enabled = true;
+  private String status = "unknown";
 
-    private boolean enabled = true;
+  @Column(name = "last_checked")
+  private LocalDateTime lastChecked;
 
-    private String status = "unknown";
+  @Column(name = "last_error")
+  private String lastError;
 
-    @Column(name = "last_checked")
-    private LocalDateTime lastChecked;
+  @Column(name = "created_at")
+  private LocalDateTime createdAt;
 
-    @Column(name = "last_error")
-    private String lastError;
+  @Column(name = "updated_at")
+  private LocalDateTime updatedAt;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+  // Все геттеры и сеттеры
+  public String getId() {
+    return id;
+  }
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+  public void setId(String id) {
+    this.id = id;
+  }
 
-    public String getId() { return id; }
+  public String getCredentialId() {
+    return credentialId;
+  }
 
-    public void setId(String id) { this.id = id; }
+  public void setCredentialId(String credentialId) {
+    this.credentialId = credentialId;
+  }
 
-    public String getCredentialId() { return credentialId; }
+  public String getServerName() {
+    return serverName;
+  }
 
-    public void setCredentialId(String credentialId) { this.credentialId = credentialId; }
+  public void setServerName(String serverName) {
+    this.serverName = serverName;
+  }
 
-    public String getServerName() { return serverName; }
+  public String getDisplayName() {
+    return displayName;
+  }
 
-    public void setServerName(String serverName) { this.serverName = serverName; }
+  public void setDisplayName(String displayName) {
+    this.displayName = displayName;
+  }
 
-    public String getDisplayName() { return displayName; }
+  public String getEnvironment() {
+    return environment;
+  }
 
-    public void setDisplayName(String displayName) { this.displayName = displayName; }
+  public void setEnvironment(String environment) {
+    this.environment = environment;
+  }
 
-    public String getEnvironment() { return environment; }
+  public String getDescription() {
+    return description;
+  }
 
-    public void setEnvironment(String environment) { this.environment = environment; }
+  public void setDescription(String description) {
+    this.description = description;
+  }
 
-    public String getDescription() { return description; }
+  public int getConnectionTimeoutMs() {
+    return connectionTimeoutMs;
+  }
 
-    public void setDescription(String description) { this.description = description; }
+  public void setConnectionTimeoutMs(int connectionTimeoutMs) {
+    this.connectionTimeoutMs = connectionTimeoutMs;
+  }
 
-    public int getConnectionTimeoutMs() { return connectionTimeoutMs; }
+  public boolean isEnabled() {
+    return enabled;
+  }
 
-    public void setConnectionTimeoutMs(int connectionTimeoutMs) { this.connectionTimeoutMs = connectionTimeoutMs; }
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+  }
 
-    public boolean isEnabled() { return enabled; }
+  public String getStatus() {
+    return status;
+  }
 
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+  public void setStatus(String status) {
+    this.status = status;
+  }
 
-    public String getStatus() { return status; }
+  public LocalDateTime getLastChecked() {
+    return lastChecked;
+  }
 
-    public void setStatus(String status) { this.status = status; }
+  public void setLastChecked(LocalDateTime lastChecked) {
+    this.lastChecked = lastChecked;
+  }
 
-    public LocalDateTime getLastChecked() { return lastChecked; }
+  public String getLastError() {
+    return lastError;
+  }
 
-    public void setLastChecked(LocalDateTime lastChecked) { this.lastChecked = lastChecked; }
+  public void setLastError(String lastError) {
+    this.lastError = lastError;
+  }
 
-    public String getLastError() { return lastError; }
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
 
-    public void setLastError(String lastError) { this.lastError = lastError; }
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+  }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
 
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+  public void setUpdatedAt(LocalDateTime updatedAt) {
+    this.updatedAt = updatedAt;
+  }
 }

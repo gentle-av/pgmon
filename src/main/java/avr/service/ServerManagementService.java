@@ -23,14 +23,16 @@ public class ServerManagementService {
   private final PollingConfigurationRepository pollingConfigRepository;
   private final CredentialService credentialService;
   private final ConnectionPoolManager connectionPoolManager;
+  private final DynamicSchedulingService dynamicSchedulingService;
 
   public ServerManagementService(MonitoredServerRepository serverRepository,
       PollingConfigurationRepository pollingConfigRepository, CredentialService credentialService,
-      ConnectionPoolManager connectionPoolManager) {
+      ConnectionPoolManager connectionPoolManager, DynamicSchedulingService dynamicSchedulingService) {
     this.serverRepository = serverRepository;
     this.pollingConfigRepository = pollingConfigRepository;
     this.credentialService = credentialService;
     this.connectionPoolManager = connectionPoolManager;
+    this.dynamicSchedulingService = dynamicSchedulingService;
   }
 
   @Transactional
@@ -167,14 +169,30 @@ public class ServerManagementService {
   public PollingConfiguration updatePollingConfig(String serverId, UpdatePollingRequest request) {
     PollingConfiguration config = pollingConfigRepository.findByServerId(serverId)
         .orElseThrow(() -> new RuntimeException("Polling config not found for server: " + serverId));
-    if (request.getPollingIntervalSeconds() > 0)
+    if (request.getPollingIntervalSeconds() > 0) {
       config.setPollingIntervalSeconds(request.getPollingIntervalSeconds());
-    if (request.getSlowQueryThresholdMs() != null)
+      config.setPollingIntervalMs(request.getPollingIntervalSeconds() * 1000);
+    }
+    if (request.getPollingIntervalMs() != null && request.getPollingIntervalMs() > 0) {
+      config.setPollingIntervalMs(request.getPollingIntervalMs());
+      config.setPollingIntervalSeconds(request.getPollingIntervalMs() / 1000);
+    }
+    if (request.getAshCollectionIntervalMs() != null && request.getAshCollectionIntervalMs() > 0) {
+      config.setAshCollectionIntervalMs(request.getAshCollectionIntervalMs());
+      config.setAshCollectionIntervalSeconds(request.getAshCollectionIntervalMs() / 1000);
+    }
+    if (request.getSessionsCollectionIntervalMs() != null && request.getSessionsCollectionIntervalMs() > 0) {
+      config.setSessionsCollectionIntervalMs(request.getSessionsCollectionIntervalMs());
+    }
+    if (request.getSlowQueryThresholdMs() != null) {
       config.setSlowQueryThresholdMs(request.getSlowQueryThresholdMs());
-    if (request.getMaxSlowQueries() != null)
+    }
+    if (request.getMaxSlowQueries() != null) {
       config.setMaxSlowQueries(request.getMaxSlowQueries());
-    if (request.getPriority() > 0)
+    }
+    if (request.getPriority() > 0) {
       config.setPriority(request.getPriority());
+    }
     config.setCollectQueries(request.isCollectQueries());
     config.setCollectConnections(request.isCollectConnections());
     config.setCollectLocks(request.isCollectLocks());
@@ -183,7 +201,9 @@ public class ServerManagementService {
     config.setCollectVacuumStats(request.isCollectVacuumStats());
     config.setCollectAshData(request.isCollectAshData());
     config.setUpdatedAt(LocalDateTime.now());
-    return pollingConfigRepository.save(config);
+    PollingConfiguration saved = pollingConfigRepository.save(config);
+    dynamicSchedulingService.rescheduleServer(serverId);
+    return saved;
   }
 
   public void refreshConnectionPool(String serverId) {

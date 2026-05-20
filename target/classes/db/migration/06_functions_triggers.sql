@@ -6,7 +6,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Триггеры
 DROP TRIGGER IF EXISTS trigger_update_servers_updated_at ON monitored_servers;
 CREATE TRIGGER trigger_update_servers_updated_at
     BEFORE UPDATE ON monitored_servers
@@ -19,7 +18,6 @@ CREATE TRIGGER trigger_update_polling_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Функция обновления статуса сервера
 CREATE OR REPLACE FUNCTION update_server_status()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -41,7 +39,6 @@ CREATE TRIGGER trigger_update_server_status
     FOR EACH ROW
     EXECUTE FUNCTION update_server_status();
 
--- Функция очистки ASH данных
 CREATE OR REPLACE FUNCTION clean_old_ash_data(retention_days INTEGER DEFAULT 7)
 RETURNS INTEGER AS $$
 DECLARE
@@ -54,7 +51,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Функция очистки истории опросов
 CREATE OR REPLACE FUNCTION clean_old_polling_history(retention_days INTEGER DEFAULT 30)
 RETURNS INTEGER AS $$
 DECLARE
@@ -67,7 +63,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Функция получения активных конфигураций
 CREATE OR REPLACE FUNCTION get_active_polling_configs()
 RETURNS TABLE(
     server_id VARCHAR(36),
@@ -75,7 +70,10 @@ RETURNS TABLE(
     credential_id VARCHAR(36),
     priority INTEGER,
     polling_interval_seconds INTEGER,
+    polling_interval_ms INTEGER,
     ash_collection_interval_seconds INTEGER,
+    ash_collection_interval_ms INTEGER,
+    sessions_collection_interval_ms INTEGER,
     slow_query_threshold_ms INTEGER,
     collect_queries BOOLEAN,
     collect_locks BOOLEAN,
@@ -89,7 +87,10 @@ BEGIN
         ms.credential_id,
         pc.priority,
         COALESCE(pc.polling_interval_seconds, 30) AS polling_interval_seconds,
+        COALESCE(pc.polling_interval_ms, 5000) AS polling_interval_ms,
         COALESCE(pc.ash_collection_interval_seconds, 2) AS ash_collection_interval_seconds,
+        COALESCE(pc.ash_collection_interval_ms, 2000) AS ash_collection_interval_ms,
+        COALESCE(pc.sessions_collection_interval_ms, 1000) AS sessions_collection_interval_ms,
         COALESCE(pc.slow_query_threshold_ms, 1000) AS slow_query_threshold_ms,
         pc.collect_queries,
         pc.collect_locks,

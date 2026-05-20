@@ -26,15 +26,17 @@ public class AshCollectorService {
   private final ConnectionPoolManager connectionPoolManager;
   private final MonitoredServerRepository serverRepository;
   private final PollingConfigurationRepository pollingConfigRepository;
+  private final DataSource pgmonDataSource;
 
   public AshCollectorService(AshHistoryRepository ashRepository, DatabaseInitializationService dbInitService,
       ConnectionPoolManager connectionPoolManager, MonitoredServerRepository serverRepository,
-      PollingConfigurationRepository pollingConfigRepository) {
+      PollingConfigurationRepository pollingConfigRepository, DataSource pgmonDataSource) {
     this.ashRepository = ashRepository;
     this.dbInitService = dbInitService;
     this.connectionPoolManager = connectionPoolManager;
     this.serverRepository = serverRepository;
     this.pollingConfigRepository = pollingConfigRepository;
+    this.pgmonDataSource = pgmonDataSource;
   }
 
   @PostConstruct
@@ -42,29 +44,36 @@ public class AshCollectorService {
     log.info("AshCollectorService инициализирован");
   }
 
+  public void collectAshSnapshotsForServer(MonitoredServer server) {
+    log.info("=== DEBUG: collectAshSnapshotsForServer called for {}", server.getServerName());
+    log.info("=== DEBUG: pgmonDataSource = {}", pgmonDataSource);
+    PollingConfiguration pollingConfig = pollingConfigRepository.findByServerId(server.getId()).orElse(null);
+    if (pollingConfig == null || !pollingConfig.isCollectAshData()) {
+      log.info("=== DEBUG: ASH data collection disabled for {}", server.getServerName());
+      return;
+    }
+    try {
+      DataSource targetDataSource = connectionPoolManager.getDataSource(server.getId());
+      JdbcTemplate targetJdbcTemplate = new JdbcTemplate(targetDataSource);
+      List<Map<String, Object>> sessions = collectActiveSessions(targetJdbcTemplate, server);
+      log.info("=== DEBUG: Collected {} sessions from target", sessions.size());
+      if (!sessions.isEmpty()) {
+        JdbcTemplate pgmonJdbcTemplate = new JdbcTemplate(pgmonDataSource);
+        Integer test = pgmonJdbcTemplate.queryForObject("SELECT 1", Integer.class);
+        log.info("=== DEBUG: pgmon connection OK, test result = {}", test);
+        ashRepository.insertSnapshot(pgmonJdbcTemplate, server, sessions);
+        log.debug("Собрано {} сессий для БД {}", sessions.size(), server.getServerName());
+      }
+    } catch (Exception e) {
+      log.error("ASH collection failed for {}: {}", server.getServerName(), e.getMessage(), e);
+    }
+  }
+
   @Scheduled(fixedDelay = 1000)
-  public void collectAshSnapshots() {
+  public void collectAllServersAshSnapshots() {
     List<MonitoredServer> servers = serverRepository.findByEnabledTrue();
     for (MonitoredServer server : servers) {
-      if (!dbInitService.isInitialized(server.getServerName())) {
-        log.debug("БД {} не инициализирована, пропускаем сбор", server.getServerName());
-        continue;
-      }
-      PollingConfiguration pollingConfig = pollingConfigRepository.findByServerId(server.getId()).orElse(null);
-      if (pollingConfig == null || !pollingConfig.isCollectAshData()) {
-        continue;
-      }
-      try {
-        DataSource dataSource = connectionPoolManager.getDataSource(server.getId());
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        List<Map<String, Object>> sessions = collectActiveSessions(jdbcTemplate, server);
-        if (!sessions.isEmpty()) {
-          ashRepository.insertSnapshot(jdbcTemplate, server.getServerName(), sessions);
-          log.debug("Собрано {} сессий для БД {}", sessions.size(), server.getServerName());
-        }
-      } catch (Exception e) {
-        log.error("ASH collection failed for {}: {}", server.getServerName(), e.getMessage());
-      }
+      collectAshSnapshotsForServer(server);
     }
   }
 
@@ -82,7 +91,7 @@ public class AshCollectorService {
             WHERE state = 'active'
               AND pid != pg_backend_pid()
               AND query NOT LIKE '%%pg_stat_activity%%'
-              AND query NOT LIKE '%%pash_ash_history%%'
+              AND query NOT LIKE '%%ash_history%%'
         """;
     try {
       return jdbcTemplate.queryForList(sql);
@@ -94,20 +103,10 @@ public class AshCollectorService {
 
   @Scheduled(cron = "0 0 * * * *")
   public void cleanOldData() {
-    List<MonitoredServer> servers = serverRepository.findByEnabledTrue();
-    for (MonitoredServer server : servers) {
-      if (!dbInitService.isInitialized(server.getServerName()))
-        continue;
-      try {
-        DataSource dataSource = connectionPoolManager.getDataSource(server.getId());
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        Integer deleted = jdbcTemplate.queryForObject("SELECT clean_old_ash_data(7)", Integer.class);
-        if (deleted != null && deleted > 0) {
-          log.info("Очищено {} записей из ASH для БД {}", deleted, server.getServerName());
-        }
-      } catch (Exception e) {
-        log.error("Ошибка очистки ASH для {}: {}", server.getServerName(), e.getMessage());
-      }
+    JdbcTemplate pgmonJdbcTemplate = new JdbcTemplate(pgmonDataSource);
+    Integer deleted = pgmonJdbcTemplate.queryForObject("SELECT clean_old_ash_data(7)", Integer.class);
+    if (deleted != null && deleted > 0) {
+      log.info("Очищено {} записей из ASH", deleted);
     }
   }
 }

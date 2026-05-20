@@ -5,8 +5,11 @@ CREATE TABLE IF NOT EXISTS polling_configurations (
     priority INTEGER DEFAULT 5,
     schedule_type VARCHAR(50) DEFAULT 'interval',
     polling_interval_seconds INTEGER DEFAULT 30,
+    polling_interval_ms INTEGER DEFAULT 5000,
     metric_collection_interval_seconds INTEGER DEFAULT 30,
     ash_collection_interval_seconds INTEGER DEFAULT 2,
+    ash_collection_interval_ms INTEGER DEFAULT 2000,
+    sessions_collection_interval_ms INTEGER DEFAULT 1000,
     cron_expression VARCHAR(100),
     timezone VARCHAR(50) DEFAULT 'UTC',
     start_time TIME,
@@ -55,3 +58,6 @@ CREATE TABLE IF NOT EXISTS polling_configurations (
 CREATE INDEX IF NOT EXISTS idx_polling_active_priority ON polling_configurations(is_active, priority);
 CREATE INDEX IF NOT EXISTS idx_polling_server ON polling_configurations(server_id);
 CREATE INDEX IF NOT EXISTS idx_polling_schedule ON polling_configurations(schedule_type, is_active);
+COMMENT ON COLUMN polling_configurations.polling_interval_ms IS 'Интервал опроса в миллисекундах (мин 100мс)';
+COMMENT ON COLUMN polling_configurations.ash_collection_interval_ms IS 'Интервал сбора ASH в миллисекундах';
+COMMENT ON COLUMN polling_configurations.sessions_collection_interval_ms IS 'Интервал сбора активных сессий в миллисекундах';
