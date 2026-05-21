@@ -9,11 +9,17 @@ spring:
       cache:
         period: 0
 
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    com.zaxxer.hikari: DEBUG
-    avr.crypto: INFO
+# logging:
+#   level:
+#     org.hibernate.SQL: WARN
+#     org.hibernate.type: WARN
+#     com.zaxxer.hikari: WARN
+#     avr.crypto: INFO
+#     avr.repository: WARN
+#     avr.service.DynamicSchedulingService: WARN
+#     org.springframework.jdbc.core: WARN
+#     org.springframework.jdbc.core.JdbcTemplate: WARN
+#     org.springframework.jdbc.core.StatementCreatorUtils: WARN
 
 management:
   endpoints:

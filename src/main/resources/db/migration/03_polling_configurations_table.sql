@@ -1,3 +1,4 @@
+-- 03_polling_configurations_table.sql
 CREATE TABLE IF NOT EXISTS polling_configurations (
     id VARCHAR(36) PRIMARY KEY,
     server_id VARCHAR(36) NOT NULL REFERENCES monitored_servers(id) ON DELETE CASCADE,
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS polling_configurations (
     collect_unused_indexes BOOLEAN DEFAULT FALSE,
     collect_vacuum_stats BOOLEAN DEFAULT TRUE,
     collect_ash_data BOOLEAN DEFAULT TRUE,
+    store_empty_snapshots BOOLEAN DEFAULT TRUE,
     slow_query_threshold_ms INTEGER,
     max_slow_queries INTEGER DEFAULT 10,
     lock_threshold_seconds INTEGER DEFAULT 30,
@@ -61,3 +63,4 @@ CREATE INDEX IF NOT EXISTS idx_polling_schedule ON polling_configurations(schedu
 COMMENT ON COLUMN polling_configurations.polling_interval_ms IS 'Интервал опроса в миллисекундах (мин 100мс)';
 COMMENT ON COLUMN polling_configurations.ash_collection_interval_ms IS 'Интервал сбора ASH в миллисекундах';
 COMMENT ON COLUMN polling_configurations.sessions_collection_interval_ms IS 'Интервал сбора активных сессий в миллисекундах';
+COMMENT ON COLUMN polling_configurations.store_empty_snapshots IS 'Записывать нулевые снапшоты при отсутствии активных сессий';

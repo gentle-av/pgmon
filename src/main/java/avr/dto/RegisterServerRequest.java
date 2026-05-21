@@ -4,17 +4,16 @@ public class RegisterServerRequest {
     private String credentialName;
     private String serverName;
     private String displayName;
+    private String environment;
+    private String description;
     private String host;
-    private int port;
+    private Integer port;
     private String databaseName;
     private String username;
     private String password;
-    private String sslMode = "disable";
-    private String environment = "production";
-    private String description;
+    private String sslMode;
     private int connectionTimeoutMs = 5000;
     private boolean enabled = true;
-    private boolean failIfExists = false;
     private int priority = 5;
     private int pollingIntervalSeconds = 30;
     private boolean collectQueries = true;
@@ -25,8 +24,8 @@ public class RegisterServerRequest {
     private boolean collectVacuumStats = true;
     private boolean collectAshData = true;
     private Integer slowQueryThresholdMs;
-    private Integer maxSlowQueries;
-    private Double deadTupleRatioThresholdPercent;
+    private Integer maxSlowQueries = 10;
+    private Double deadTupleRatioThresholdPercent = 10.0;
 
     public String getCredentialName() { return credentialName; }
     public void setCredentialName(String credentialName) { this.credentialName = credentialName; }
@@ -34,10 +33,14 @@ public class RegisterServerRequest {
     public void setServerName(String serverName) { this.serverName = serverName; }
     public String getDisplayName() { return displayName; }
     public void setDisplayName(String displayName) { this.displayName = displayName; }
+    public String getEnvironment() { return environment; }
+    public void setEnvironment(String environment) { this.environment = environment; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
     public String getHost() { return host; }
     public void setHost(String host) { this.host = host; }
-    public int getPort() { return port; }
-    public void setPort(int port) { this.port = port; }
+    public Integer getPort() { return port; }
+    public void setPort(Integer port) { this.port = port; }
     public String getDatabaseName() { return databaseName; }
     public void setDatabaseName(String databaseName) { this.databaseName = databaseName; }
     public String getUsername() { return username; }
@@ -46,16 +49,10 @@ public class RegisterServerRequest {
     public void setPassword(String password) { this.password = password; }
     public String getSslMode() { return sslMode; }
     public void setSslMode(String sslMode) { this.sslMode = sslMode; }
-    public String getEnvironment() { return environment; }
-    public void setEnvironment(String environment) { this.environment = environment; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
     public int getConnectionTimeoutMs() { return connectionTimeoutMs; }
     public void setConnectionTimeoutMs(int connectionTimeoutMs) { this.connectionTimeoutMs = connectionTimeoutMs; }
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
-    public boolean isFailIfExists() { return failIfExists; }
-    public void setFailIfExists(boolean failIfExists) { this.failIfExists = failIfExists; }
     public int getPriority() { return priority; }
     public void setPriority(int priority) { this.priority = priority; }
     public int getPollingIntervalSeconds() { return pollingIntervalSeconds; }

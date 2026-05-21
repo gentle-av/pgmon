@@ -27,13 +27,13 @@ public class AshController {
     }
 
     @GetMapping("/data/{serverId}")
-    public Map<String, Object> getAshData(@PathVariable String serverId, @RequestParam(defaultValue = "30") int minutes) {
+    public Map<String, Object> getAshData(@PathVariable String serverId, @RequestParam(defaultValue = "30") int minutes, @RequestParam(defaultValue = "true") boolean includeEmpty) {
         MonitoredServer server = serverRepository.findById(serverId).orElse(null);
         if (server == null) {
             return Map.of("error", "Server not found");
         }
         JdbcTemplate jdbcTemplate = getJdbcTemplate(server);
-        List<Map<String, Object>> rawData = ashRepository.getAshData(jdbcTemplate, server.getServerName(), minutes);
+        List<Map<String, Object>> rawData = ashRepository.getAshData(jdbcTemplate, server.getServerName(), minutes, includeEmpty);
         Map<String, Object> chartData = new HashMap<>();
         List<String> times = new ArrayList<>();
         Map<String, List<Number>> seriesMap = new LinkedHashMap<>();

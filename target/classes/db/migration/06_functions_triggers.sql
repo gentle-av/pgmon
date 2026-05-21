@@ -1,10 +1,11 @@
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS
+$func$
 BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$func$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trigger_update_servers_updated_at ON monitored_servers;
 CREATE TRIGGER trigger_update_servers_updated_at
@@ -19,7 +20,8 @@ CREATE TRIGGER trigger_update_polling_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 CREATE OR REPLACE FUNCTION update_server_status()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS
+$func$
 BEGIN
     IF NEW.status = 'online' OR NEW.status = 'offline' THEN
         NEW.last_checked = CURRENT_TIMESTAMP;
@@ -31,7 +33,7 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$func$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trigger_update_server_status ON monitored_servers;
 CREATE TRIGGER trigger_update_server_status
@@ -39,20 +41,9 @@ CREATE TRIGGER trigger_update_server_status
     FOR EACH ROW
     EXECUTE FUNCTION update_server_status();
 
-CREATE OR REPLACE FUNCTION clean_old_ash_data(retention_days INTEGER DEFAULT 7)
-RETURNS INTEGER AS $$
-DECLARE
-    deleted_count INTEGER;
-BEGIN
-    DELETE FROM pash_ash_history
-    WHERE snapshot_time < NOW() - (retention_days || ' days')::INTERVAL;
-    GET DIAGNOSTICS deleted_count = ROW_COUNT;
-    RETURN deleted_count;
-END;
-$$ LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION clean_old_polling_history(retention_days INTEGER DEFAULT 30)
-RETURNS INTEGER AS $$
+RETURNS INTEGER AS
+$func$
 DECLARE
     deleted_count INTEGER;
 BEGIN
@@ -61,7 +52,7 @@ BEGIN
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
     RETURN deleted_count;
 END;
-$$ LANGUAGE plpgsql;
+$func$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION get_active_polling_configs()
 RETURNS TABLE(
@@ -77,8 +68,10 @@ RETURNS TABLE(
     slow_query_threshold_ms INTEGER,
     collect_queries BOOLEAN,
     collect_locks BOOLEAN,
+    store_empty_snapshots BOOLEAN,
     jdbc_url TEXT
-) AS $$
+) AS
+$func$
 BEGIN
     RETURN QUERY
     SELECT
@@ -94,6 +87,7 @@ BEGIN
         COALESCE(pc.slow_query_threshold_ms, 1000) AS slow_query_threshold_ms,
         pc.collect_queries,
         pc.collect_locks,
+        COALESCE(pc.store_empty_snapshots, TRUE) AS store_empty_snapshots,
         FORMAT('jdbc:postgresql://%s:%d/%s',
             sdc.host, sdc.port, sdc.database_name) AS jdbc_url
     FROM monitored_servers ms
@@ -111,4 +105,4 @@ BEGIN
       )
     ORDER BY pc.priority ASC;
 END;
-$$ LANGUAGE plpgsql;
+$func$ LANGUAGE plpgsql;
