@@ -9,7 +9,6 @@ import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.stereotype.Service;
 
@@ -24,20 +23,16 @@ import jakarta.annotation.PreDestroy;
 public class DynamicSchedulingService {
     private static final Logger log = LoggerFactory.getLogger(DynamicSchedulingService.class);
     private final TaskScheduler taskScheduler;
-    private final MultiDatabaseMonitorService monitorService;
     private final AshCollectorService ashCollectorService;
     private final PollingConfigurationRepository pollingConfigRepository;
     private final MonitoredServerRepository serverRepository;
-    private final Map<String, ScheduledFuture<?>> monitoringTasks = new ConcurrentHashMap<>();
     private final Map<String, ScheduledFuture<?>> ashTasks = new ConcurrentHashMap<>();
 
     public DynamicSchedulingService(TaskScheduler taskScheduler,
-                                    MultiDatabaseMonitorService monitorService,
                                     AshCollectorService ashCollectorService,
                                     PollingConfigurationRepository pollingConfigRepository,
                                     MonitoredServerRepository serverRepository) {
         this.taskScheduler = taskScheduler;
-        this.monitorService = monitorService;
         this.ashCollectorService = ashCollectorService;
         this.pollingConfigRepository = pollingConfigRepository;
         this.serverRepository = serverRepository;
@@ -66,18 +61,6 @@ public class DynamicSchedulingService {
 
     public void scheduleServer(MonitoredServer server, PollingConfiguration config) {
         String serverId = server.getId();
-        cancelTask(monitoringTasks, serverId + "_monitor");
-        if (config.isActive()) {
-            Runnable monitorTask = () -> {
-                if (shouldExecuteNow(config)) {
-                    monitorService.pollDatabase(server, config);
-                }
-            };
-            int intervalMs = config.getPollingIntervalMs() > 0 ? config.getPollingIntervalMs() : 5000;
-            ScheduledFuture<?> monitorFuture = scheduleWithPrecision(monitorTask, intervalMs);
-            monitoringTasks.put(serverId + "_monitor", monitorFuture);
-            log.info("Scheduled monitor for {} with interval {} ms", server.getServerName(), intervalMs);
-        }
         cancelTask(ashTasks, serverId + "_ash");
         if (config.isActive() && config.isCollectAshData()) {
             Runnable ashTask = () -> {
@@ -86,8 +69,7 @@ public class DynamicSchedulingService {
                     ashCollectorService.collectAshSnapshotsForServer(server, storeEmpty);
                 }
             };
-            int ashIntervalMs = config.getAshCollectionIntervalMs() > 0 ? config.getAshCollectionIntervalMs()
-                    : (config.getPollingIntervalMs() > 0 ? config.getPollingIntervalMs() / 2 : 2000);
+            int ashIntervalMs = config.getAshCollectionIntervalMs() > 0 ? config.getAshCollectionIntervalMs() : 2000;
             ScheduledFuture<?> ashFuture = scheduleWithPrecision(ashTask, ashIntervalMs);
             ashTasks.put(serverId + "_ash", ashFuture);
             log.info("Scheduled ASH collector for {} with interval {} ms", server.getServerName(), ashIntervalMs);
@@ -100,10 +82,6 @@ public class DynamicSchedulingService {
         trigger.setInitialDelay(Duration.ofMillis(0));
         trigger.setFixedRate(true);
         return taskScheduler.schedule(task, trigger);
-    }
-
-    public void scheduleWithCron(Runnable task, String cronExpression) {
-        taskScheduler.schedule(task, new CronTrigger(cronExpression));
     }
 
     private boolean shouldExecuteNow(PollingConfiguration config) {
@@ -143,12 +121,10 @@ public class DynamicSchedulingService {
     }
 
     private void cancelServerTasks(String serverId) {
-        cancelTask(monitoringTasks, serverId + "_monitor");
         cancelTask(ashTasks, serverId + "_ash");
     }
 
     private void cancelAllTasks() {
-        monitoringTasks.keySet().forEach(key -> cancelTask(monitoringTasks, key));
         ashTasks.keySet().forEach(key -> cancelTask(ashTasks, key));
     }
 
@@ -158,33 +134,8 @@ public class DynamicSchedulingService {
         if (config != null && server != null) {
             config.setStoreEmptySnapshots(storeEmpty);
             pollingConfigRepository.save(config);
-            String ashTaskKey = serverId + "_ash";
-            ScheduledFuture<?> existingTask = ashTasks.get(ashTaskKey);
-            if (existingTask != null && !existingTask.isDone()) {
-                existingTask.cancel(false);
-            }
-            if (config.isActive() && config.isCollectAshData() && server.isEnabled()) {
-                Runnable ashTask = () -> {
-                    if (shouldExecuteNow(config)) {
-                        boolean storeEmptyValue = config.getStoreEmptySnapshots() != null ? config.getStoreEmptySnapshots() : true;
-                        ashCollectorService.collectAshSnapshotsForServer(server, storeEmptyValue);
-                    }
-                };
-                int ashIntervalMs = config.getAshCollectionIntervalMs() > 0 ? config.getAshCollectionIntervalMs()
-                        : (config.getPollingIntervalMs() > 0 ? config.getPollingIntervalMs() / 2 : 2000);
-                ScheduledFuture<?> ashFuture = scheduleWithPrecision(ashTask, ashIntervalMs);
-                ashTasks.put(ashTaskKey, ashFuture);
-                log.info("Updated ASH collector for {} with storeEmpty={}", server.getServerName(), storeEmpty);
-            }
-        }
-    }
-
-    public void updateServerSchedule(String serverId, int newIntervalMs) {
-        var config = pollingConfigRepository.findByServerId(serverId).orElse(null);
-        if (config != null) {
-            config.setPollingIntervalMs(newIntervalMs);
-            pollingConfigRepository.save(config);
             rescheduleServer(serverId);
+            log.info("Updated ASH collector for {} with storeEmpty={}", server.getServerName(), storeEmpty);
         }
     }
 }

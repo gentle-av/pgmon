@@ -21,14 +21,13 @@ CREATE INDEX IF NOT EXISTS idx_ash_query_hash ON ash_history(query_hash);
 CREATE INDEX IF NOT EXISTS idx_ash_session_count ON ash_history(session_count);
 
 CREATE OR REPLACE FUNCTION clean_old_ash_data(retention_days INTEGER DEFAULT 7)
-RETURNS INTEGER AS
-$func$
+RETURNS INTEGER LANGUAGE plpgsql AS '
 DECLARE
     deleted_count INTEGER;
 BEGIN
     DELETE FROM ash_history
-    WHERE snapshot_time < NOW() - (retention_days || ' days')::INTERVAL;
+    WHERE snapshot_time < NOW() - (retention_days || '' days'')::INTERVAL;
     GET DIAGNOSTICS deleted_count = ROW_COUNT;
     RETURN deleted_count;
 END;
-$func$ LANGUAGE plpgsql;
+';
