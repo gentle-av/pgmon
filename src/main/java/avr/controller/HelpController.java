@@ -1,7 +1,6 @@
 package avr.controller;
 
 import java.nio.charset.StandardCharsets;
-
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -11,7 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController @RequestMapping("/api")
+@RestController
+@RequestMapping("/api")
 public class HelpController {
 
   @GetMapping(value = "/help", produces = MediaType.TEXT_HTML_VALUE)

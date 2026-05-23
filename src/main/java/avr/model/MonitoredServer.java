@@ -1,48 +1,34 @@
 package avr.model;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
-@Entity @Table(name = "monitored_servers")
+@Entity
+@Table(name = "monitored_servers")
 public class MonitoredServer {
   @Id
   private String id;
-
   @Column(name = "credential_id")
   private String credentialId;
-
   @Column(name = "server_name")
   private String serverName;
-
   @Column(name = "display_name")
   private String displayName;
-
   private String environment;
   private String description;
-
   @Column(name = "connection_timeout_ms")
   private int connectionTimeoutMs = 5000;
-
   private boolean enabled = true;
   private String status = "unknown";
-
   @Column(name = "last_checked")
   private LocalDateTime lastChecked;
-
   @Column(name = "last_error")
   private String lastError;
-
   @Column(name = "created_at")
   private LocalDateTime createdAt;
-
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
-  // Все геттеры и сеттеры
   public String getId() {
     return id;
   }

@@ -1,8 +1,5 @@
 package avr.controller;
 
-import avr.config.ConfigRoot;
-import avr.config.MonitoringConfig;
-import avr.dto.DatabaseConfigDTO;
 import avr.dto.UpdatePollingRequest;
 import avr.model.MonitoredServer;
 import avr.model.PollingConfiguration;
@@ -13,26 +10,22 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.time.LocalDateTime;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/config")
 public class ConfigController {
   private static final Logger log = LoggerFactory.getLogger(ConfigController.class);
-  private final MonitoringConfig monitoringConfig;
   private final MonitoredServerRepository serverRepository;
   private final PollingConfigurationRepository pollingConfigRepository;
   private final DynamicSchedulingService dynamicSchedulingService;
 
-  public ConfigController(MonitoringConfig monitoringConfig,
-      MonitoredServerRepository serverRepository,
+  public ConfigController(MonitoredServerRepository serverRepository,
       PollingConfigurationRepository pollingConfigRepository,
       DynamicSchedulingService dynamicSchedulingService) {
-    this.monitoringConfig = monitoringConfig;
     this.serverRepository = serverRepository;
     this.pollingConfigRepository = pollingConfigRepository;
     this.dynamicSchedulingService = dynamicSchedulingService;
@@ -49,13 +42,6 @@ public class ConfigController {
         dynamicSchedulingService.rescheduleServer(config.getServerId());
       }
     }
-  }
-
-  @GetMapping("/databases")
-  public List<DatabaseConfigDTO> getDatabases() {
-    return monitoringConfig.getDatabaseConfigs().stream()
-        .map(this::toDTO)
-        .collect(Collectors.toList());
   }
 
   @GetMapping("/servers")
@@ -122,20 +108,5 @@ public class ConfigController {
     PollingConfiguration saved = pollingConfigRepository.save(config);
     dynamicSchedulingService.rescheduleServer(id);
     return saved;
-  }
-
-  @GetMapping("/server")
-  public Map<String, Integer> getServerPort() {
-    return Map.of("port", monitoringConfig.getServerConfig().getPort());
-  }
-
-  @GetMapping("/monitoring")
-  public ConfigRoot.MonitoringSettings getMonitoringSettings() {
-    return monitoringConfig.getMonitoringSettings();
-  }
-
-  private DatabaseConfigDTO toDTO(ConfigRoot.DatabaseConfig db) {
-    String jdbcUrl = String.format("jdbc:postgresql://%s:%d/%s", db.getHost(), db.getPort(), db.getDatabase());
-    return new DatabaseConfigDTO(db.getName(), db.isEnabled(), jdbcUrl, db.getUsername());
   }
 }

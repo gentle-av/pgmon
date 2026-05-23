@@ -11,11 +11,9 @@
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/HelpController.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/service/ConnectionPoolManager.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/dto/UpdatePollingRequest.java
-/home/avr/code/projects/java/pgmon/src/main/java/avr/PgGrafanaFasade.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/TableStatsRepository.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/controller/AshController.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/MonitoredServerRepository.java
-/home/avr/code/projects/java/pgmon/src/main/java/avr/config/SslConfiguration.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/PollingHistoryRepository.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/TableSizeInfo.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/service/CredentialService.java
@@ -31,6 +29,7 @@
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/CredentialRepository.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/service/DynamicSchedulingService.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/repository/PollingConfigurationRepository.java
+/home/avr/code/projects/java/pgmon/src/main/java/avr/PGMon.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/PollingConfiguration.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/dto/DatabaseConfigDTO.java
 /home/avr/code/projects/java/pgmon/src/main/java/avr/model/PollingHistory.java

@@ -6,8 +6,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-public class PgGrafanaFasade {
+public class PGMon {
   public static void main(String[] args) {
-    SpringApplication.run(PgGrafanaFasade.class, args);
+    SpringApplication.run(PGMon.class, args);
   }
 }

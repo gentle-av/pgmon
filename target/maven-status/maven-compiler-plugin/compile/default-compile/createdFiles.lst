@@ -1,5 +1,4 @@
 avr/repository/CredentialRepository.class
-avr/config/ConfigRoot$DatabaseConfig.class
 avr/repository/AshHistoryRepository$1.class
 avr/repository/PollingConfigurationRepository.class
 avr/config/ConfigRoot$SslConfig.class
@@ -8,7 +7,6 @@ avr/repository/AshHistoryRepository.class
 avr/config/StorageDataSourceConfig.class
 avr/config/ConfigRoot$AlertingSettings.class
 avr/dto/RegisterServerRequest.class
-avr/PgGrafanaFasade.class
 avr/config/ConfigRoot$ServerConfig.class
 avr/service/AshCollectorService.class
 avr/service/ConnectionPoolManager.class
@@ -21,7 +19,6 @@ avr/model/MonitoredServer.class
 avr/config/ConfigRoot.class
 avr/crypto/CryptoService.class
 avr/dto/UpdateServerRequest.class
-avr/config/SslConfiguration.class
 avr/config/SchedulingConfig.class
 avr/repository/MonitoredServerRepository.class
 avr/controller/ServerManagementController.class
@@ -32,6 +29,7 @@ avr/model/TableSizeInfo.class
 avr/model/PollingHistory.class
 avr/repository/PollingHistoryRepository.class
 avr/model/PollingConfiguration.class
+avr/PGMon.class
 avr/config/Json5Parser.class
 avr/repository/TableStatsRepository.class
 avr/model/StoredCredential.class
@@ -39,7 +37,6 @@ avr/controller/HelpController.class
 avr/controller/AshController.class
 avr/service/CredentialService.class
 avr/service/DynamicSchedulingService.class
-avr/config/ConfigRoot$WebConfig.class
 avr/controller/ConfigController.class
 avr/cache/CacheNames.class
 avr/service/ServerManagementService.class

@@ -1,5 +1,11 @@
 server:
   port: 3001
+  ssl:
+    enabled: true
+    key-store: classpath:keystore.p12
+    key-store-password: changeit
+    key-store-type: PKCS12
+    key-alias: tomcat
 
 spring:
   profiles:
@@ -8,18 +14,6 @@ spring:
     resources:
       cache:
         period: 0
-
-# logging:
-#   level:
-#     org.hibernate.SQL: WARN
-#     org.hibernate.type: WARN
-#     com.zaxxer.hikari: WARN
-#     avr.crypto: INFO
-#     avr.repository: WARN
-#     avr.service.DynamicSchedulingService: WARN
-#     org.springframework.jdbc.core: WARN
-#     org.springframework.jdbc.core.JdbcTemplate: WARN
-#     org.springframework.jdbc.core.StatementCreatorUtils: WARN
 
 management:
   endpoints:
